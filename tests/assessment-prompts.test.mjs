@@ -4,6 +4,9 @@ import {
   assessmentSystemPrompt,
   validateAssessmentInput,
   validateGeneratedQuestions,
+  buildAssessmentBlueprint,
+  assessQuestionDraft,
+  normalizeQuestionText,
 } from "../lib/ai/assessment-prompts.mjs";
 const brief = {
   consent: true,
@@ -37,6 +40,67 @@ test("assessment briefs require consent, bounded fields, actual skills and suppo
     { ...brief, description: "x".repeat(6001) },
   ])
     assert.throws(() => validateAssessmentInput(input));
+});
+test("blueprints cover each selected skill and reject undersized or unsupported briefs", () => {
+  const plan = buildAssessmentBlueprint(
+    ["Quality inspection", "Communication"],
+    5,
+    "Balanced",
+  );
+  assert.deepEqual(
+    plan.map((p) => p.skill),
+    [
+      "Quality inspection",
+      "Communication",
+      "Quality inspection",
+      "Communication",
+      "Quality inspection",
+    ],
+  );
+  assert.equal(plan[1].approach, "Practical scenario");
+  assert.throws(() =>
+    validateAssessmentInput({ ...brief, skills: ["One", "Two"], count: 1 }),
+  );
+  assert.throws(() =>
+    validateAssessmentInput({ ...brief, categoryFocus: "Invented focus" }),
+  );
+  const input = validateAssessmentInput({
+    ...brief,
+    skills: ["Quality inspection", "Communication"],
+    count: 2,
+  });
+  assert.throws(
+    () =>
+      validateGeneratedQuestions(
+        JSON.stringify([
+          q,
+          {
+            ...q,
+            question:
+              "Which inspection measurement establishes compliance with the given specification?",
+          },
+        ]),
+        input,
+      ),
+    /blueprint skill/,
+  );
+});
+test("draft review highlights gaps and normalized duplicates without erasing code operators", () => {
+  const review = assessQuestionDraft(
+    [q, { ...q, question: q.question.toUpperCase().replace("?", "!") }],
+    ["Quality inspection", "Communication"],
+  );
+  assert.ok(review.issues.some((i) => i.includes("duplicates another")));
+  assert.deepEqual(review.uncovered, ["Communication"]);
+  assert.notEqual(normalizeQuestionText("C++"), normalizeQuestionText("C#"));
+  assert.notEqual(
+    normalizeQuestionText("x < 5"),
+    normalizeQuestionText("x > 5"),
+  );
+  assert.equal(
+    normalizeQuestionText("Full   WIDTH?"),
+    normalizeQuestionText("Ｆull WIDTH!"),
+  );
 });
 test("valid non-software questions preserve author context and answer key", () => {
   assert.deepEqual(validateGeneratedQuestions(JSON.stringify([q]), brief), [q]);

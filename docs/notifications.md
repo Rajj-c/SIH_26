@@ -1,5 +1,7 @@
 # In-app notifications — increment 10
 
+Update: migration 022 adds optional opt-in email digests and worker-driven upcoming-session reminders. They require server configuration and an external scheduler; see `remaining-implementation-rollout.md`. The no-email/no-background-job statements below describe increment 10.
+
 Apply `supabase/migrations/202609220010_notifications.sql` once after increment 9, then refresh. Every dashboard now has a bell linking to that role's private notification inbox. No external service connection is required.
 
 Database triggers notify relevant accounts about application/timeline changes (including recruitment and offer actions), internship logs, milestones, reports/reviews, supervision invitations/revocations, certificate issuance/revocation, program enrollments/work/reviews, and institution membership requests/status changes. Recipient selection uses the current owner/applicant, accepted supervisors where relevant, and currently approved institutions. The actor does not receive a notification for their own action. Append-only event IDs and unique recipient/event keys prevent duplicate delivery of the same source event. Real successive actions can legitimately produce multiple notices.

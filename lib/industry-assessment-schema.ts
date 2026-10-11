@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { normalizeQuestionText } from "./ai/assessment-prompts.mjs";
 export const industryQuestionSchema = z.object({
   question: z.string().trim().min(10).max(2000),
   options: z
     .array(z.string().trim().min(1).max(800))
     .length(4)
     .refine(
-      (options) => new Set(options.map((o) => o.toLowerCase())).size === 4,
+      (options) => new Set(options.map(normalizeQuestionText)).size === 4,
       "Options must be distinct.",
     ),
   correctAnswer: z.number().int().min(0).max(3),
@@ -21,7 +22,16 @@ export const industryDefinitionSchema = z.object({
   summary: z.string().trim().min(20).max(4000),
   passing_score: z.number().int().min(1).max(100),
   publish: z.boolean(),
-  questions: z.array(industryQuestionSchema).min(1).max(30),
+  questions: z
+    .array(industryQuestionSchema)
+    .min(1)
+    .max(30)
+    .refine(
+      (questions) =>
+        new Set(questions.map((q) => normalizeQuestionText(q.question)))
+          .size === questions.length,
+      "Remove duplicate questions before saving.",
+    ),
 });
 export function assessmentDatabaseError(error: {
   code?: string;

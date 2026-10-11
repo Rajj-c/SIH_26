@@ -48,6 +48,10 @@ function harness({
   const sent = [],
     exports = {};
   const db = {
+    rpc: async (name) => {
+      assert.equal(name, "reserve_ai_request");
+      return { data: sent.length ? 60 : 0, error: null };
+    },
     auth: { getUser: async () => ({ data: { user } }) },
     from: () => ({
       select: () => ({
@@ -114,7 +118,7 @@ test("question route returns reviewed-only metadata and isolates context from sy
   assert.deepEqual(r.body.questions, [question]);
   assert.equal(
     h.sent[0].systemInstruction.parts[0].text,
-    prompts.assessmentSystemPrompt,
+    prompts.assessmentSystemPrompt + "\n" + prompts.blueprintInstructions,
   );
   assert.equal(
     JSON.parse(h.sent[0].contents[0].parts[0].text).title,

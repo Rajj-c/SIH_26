@@ -7,6 +7,7 @@ import {
 import { useRecruitment, recruitmentAction } from "@/lib/recruitment";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
+import { InterviewCalendarButton } from "./interview-calendar-button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   DataState,
@@ -96,6 +97,10 @@ export function RecruitmentPanel({
                   Cancel interview
                 </Button>
               )}
+              {i.status === "Scheduled" &&
+                ["Shortlisted", "Interview Scheduled"].includes(a.status) && (
+                  <InterviewCalendarButton interviewId={i.id} />
+                )}
               {applicant &&
                 a.status === "Interview Scheduled" &&
                 i.status === "Scheduled" &&

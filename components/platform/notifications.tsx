@@ -1,16 +1,20 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { EmailPreferences } from "./email-preferences";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { useNotifications, markNotificationsRead } from "@/lib/notifications";
 import { DataState, Empty, PageHeading, Tag, useAction } from "./primitives";
 export function NotificationsWorkspace({ role }: { role: string }) {
-  const state = useNotifications();
   const action = useAction();
   const [unreadOnly, setUnreadOnly] = useState(false);
-  const items =
-    state.data?.items.filter((n) => !unreadOnly || !n.read_at) ?? [];
+  const [cursors, setCursors] = useState<(string | null)[]>([null]);
+  const state = useNotifications({
+    unreadOnly,
+    cursor: cursors[cursors.length - 1],
+  });
+  const items = state.data?.items ?? [];
   return (
     <DashboardShell role={role} title="Notifications">
       <div className="mx-auto max-w-4xl space-y-6">
@@ -20,6 +24,7 @@ export function NotificationsWorkspace({ role }: { role: string }) {
           description="Real updates from your applications, internships, learning programs and institution. Notifications begin when this feature is activated; earlier activity is not reconstructed."
         />
         <DataState {...state} retry={state.refresh} />
+        <EmailPreferences />
         {action.feedback}
         {state.data && !state.error && (
           <>
@@ -29,17 +34,22 @@ export function NotificationsWorkspace({ role }: { role: string }) {
                   {state.data.unread} unread updates
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Showing the latest 100 notifications. Updates refresh every 30
-                  seconds and when you return to the page.
+                  Page {cursors.length} · up to 100{" "}
+                  {unreadOnly ? "unread" : "saved"} updates per page. Unread
+                  count covers your entire inbox. Updates refresh every 30
+                  seconds.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
                   variant="outline"
                   aria-pressed={unreadOnly}
-                  onClick={() => setUnreadOnly(!unreadOnly)}
+                  onClick={() => {
+                    setUnreadOnly(!unreadOnly);
+                    setCursors([null]);
+                  }}
                 >
-                  {unreadOnly ? "Show all recent" : "Unread only"}
+                  {unreadOnly ? "Show all updates" : "Unread only"}
                 </Button>
                 <Button
                   variant="outline"
@@ -103,16 +113,57 @@ export function NotificationsWorkspace({ role }: { role: string }) {
               <Empty
                 title={
                   unreadOnly
-                    ? "No unread updates in the latest 100"
-                    : "No notifications yet"
+                    ? "No unread updates on this page"
+                    : "No notifications on this page"
                 }
                 description="Updates appear when another account takes a relevant action. You will not receive notifications for your own actions."
               />
             )}
+            <nav
+              aria-label="Notification pages"
+              className="glass-panel flex flex-wrap items-center gap-3 rounded-2xl p-4"
+            >
+              <Button
+                variant="outline"
+                disabled={cursors.length === 1 || state.loading || action.busy}
+                onClick={() => setCursors((current) => current.slice(0, -1))}
+              >
+                Previous page
+              </Button>
+              <Button
+                variant="outline"
+                disabled={
+                  !state.data.nextCursor || state.loading || action.busy
+                }
+                onClick={() => {
+                  if (state.data?.nextCursor)
+                    setCursors((current) => [
+                      ...current,
+                      state.data!.nextCursor,
+                    ]);
+                }}
+              >
+                Older updates
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={state.loading || action.busy}
+                onClick={() => {
+                  setCursors([null]);
+                  void state.refresh();
+                }}
+              >
+                Newest updates
+              </Button>
+              <p className="text-xs text-muted-foreground" role="status">
+                {items.length} updates on page {cursors.length}
+              </p>
+            </nav>
             <p className="text-xs text-muted-foreground">
               Opening a workspace does not mark a notification read. Access to
               the underlying record is checked separately and may have changed.
-              This inbox does not send email, SMS or push notifications.
+              Email updates require opt-in and a configured delivery worker. SMS
+              and push notifications are not enabled.
             </p>
           </>
         )}

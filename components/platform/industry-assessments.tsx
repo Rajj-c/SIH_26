@@ -1,10 +1,19 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { ClipboardCheck, Plus, Trash2, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
+import {
+  ClipboardCheck,
+  Plus,
+  Trash2,
+  ArrowRight,
+  Sparkles,
+  CheckCircle2,
+} from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { AIScreeningAssistant } from "@/components/platform/ai-screening-assistant";
+import { assessQuestionDraft } from "@/lib/ai/assessment-prompts.mjs";
+import { useQuestionBank, submitQuestionBank } from "@/lib/question-bank";
 import {
   Card,
   CardContent,
@@ -92,7 +101,7 @@ export function IndustryAssessmentsWorkspace({
           description={
             author
               ? "Author competency-specific questions, review your answer key, and publish an immutable version linked to an opportunity."
-              : "These assessments are authored and approved by the publishing industry account, not independently accredited exams."
+              : "Employer-defined assessments, not independently accredited exams. Question review does not certify professional competence."
           }
           action={
             author && (
@@ -111,6 +120,14 @@ export function IndustryAssessmentsWorkspace({
         {action.feedback}
         {data && !platform.error && !assessments.error && (
           <>
+            {author && (
+              <Link
+                className="text-sm font-semibold role-text"
+                href="/industry/question-bank"
+              >
+                Open question bank & review history →
+              </Link>
+            )}
             {editing && author && (
               <AssessmentEditor
                 key={editing.id || editing.supersedes || "new"}
@@ -191,7 +208,24 @@ export function IndustryAssessmentsWorkspace({
                           </span>
                         )}
                       </div>
-                      <div className="mt-5 border-t border-border pt-4">
+                      <div className="mt-5 border-t border-border pt-4 space-y-3">
+                        {author && (
+                          <Button
+                            variant="outline"
+                            disabled={action.busy}
+                            onClick={() =>
+                              action.run(async () => {
+                                const count = await submitQuestionBank(a.id);
+                                if (!count)
+                                  throw new Error(
+                                    "These exact questions are already pending or approved. Check the question bank.",
+                                  );
+                              }, "Saved question snapshots submitted for independent review.")
+                            }
+                          >
+                            Submit saved questions for review
+                          </Button>
+                        )}
                         {author ? (
                           <Button
                             variant="outline"
@@ -271,6 +305,8 @@ function AssessmentEditor({
   onSaved: () => Promise<void>;
 }) {
   const action = useAction();
+  const bank = useQuestionBank();
+  const account = usePlatformData();
   const [questions, setQuestions] = useState<IndustryQuestion[]>(
     initial.questions || [blankQuestion()],
   );
@@ -281,8 +317,10 @@ function AssessmentEditor({
     initial.opportunity_id || (opportunities[0]?.id ?? ""),
   );
   const selectedOpp = opportunities.find((o) => o.id === selectedOppId);
+  const quality = assessQuestionDraft(questions, selectedOpp?.skills ?? []);
 
   function update(index: number, patch: Partial<IndustryQuestion>) {
+    setPublish(false);
     setQuestions((items) =>
       items.map((q, i) => (i === index ? { ...q, ...patch } : q)),
     );
@@ -293,6 +331,7 @@ function AssessmentEditor({
     metadata: { title?: string; summary?: string },
   ) {
     setQuestions(generatedQuestions);
+    setPublish(false);
     if (!titleVal && metadata.title) {
       setTitleVal(metadata.title);
     }
@@ -312,12 +351,13 @@ function AssessmentEditor({
               : "Assessment builder"}
         </CardTitle>
         <CardDescription>
-          Question banks are private. Publishing records your approval and locks
-          this version.
+          Save a draft, submit its questions for independent review, then
+          publish. Any question edit requires approval of the new snapshot.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6">
         <form
+          onChangeCapture={() => setPublish(false)}
           className="space-y-6"
           onSubmit={async (e) => {
             e.preventDefault();
@@ -412,22 +452,69 @@ function AssessmentEditor({
             onQuestionsGenerated={handleQuestionsGenerated}
           />
 
+          <section className="glass-panel rounded-2xl p-4 space-y-3">
+            <h3 className="font-semibold">Reuse an approved question</h3>
+            <DataState {...bank} retry={bank.refresh} />
+            <select
+              className="field"
+              aria-label="Import approved question"
+              value=""
+              disabled={questions.length >= 30}
+              onChange={(e) => {
+                const item = bank.data?.items.find(
+                  (b) => b.id === e.target.value,
+                );
+                if (item) {
+                  setPublish(false);
+                  setQuestions((items) => [
+                    ...items.filter((q) => q.question.trim()),
+                    structuredClone(item.question),
+                  ]);
+                }
+              }}
+            >
+              <option value="">Choose from your approved question bank</option>
+              {bank.data?.items
+                .filter(
+                  (b) =>
+                    b.status === "Approved" &&
+                    b.owner_id === account.data?.profile.id,
+                )
+                .map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.question.skillArea} · {b.question.question.slice(0, 100)}
+                  </option>
+                ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Only unchanged, approved questions owned by your account can be
+              published. Check that reused questions fit this opportunity. Save
+              a draft before submitting new questions from the assessment list.
+            </p>
+          </section>
+
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
                   Question Bank ({questions.length})
-                  <span className="text-xs text-muted-foreground font-normal">· Max 30 questions</span>
+                  <span className="text-xs text-muted-foreground font-normal">
+                    · Max 30 questions
+                  </span>
                 </span>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Click the letter badge next to an option to mark it as the verified correct answer.
+                  Click the letter badge next to an option to mark it as the
+                  intended correct answer.
                 </p>
               </div>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setQuestions([...questions, blankQuestion()])}
+                onClick={() => {
+                  setPublish(false);
+                  setQuestions([...questions, blankQuestion()]);
+                }}
                 className="text-xs h-8 cursor-pointer shrink-0"
               >
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add Question
@@ -465,11 +552,12 @@ function AssessmentEditor({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() =>
+                      onClick={() => {
+                        setPublish(false);
                         setQuestions((items) =>
                           items.filter((_, i) => i !== index),
-                        )
-                      }
+                        );
+                      }}
                       className="text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10 h-7 px-2 cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5 mr-1" />
@@ -599,11 +687,47 @@ function AssessmentEditor({
             type="button"
             variant="outline"
             disabled={questions.length >= 30 || action.busy}
-            onClick={() => setQuestions((items) => [...items, blankQuestion()])}
+            onClick={() => {
+              setPublish(false);
+              setQuestions((items) => [...items, blankQuestion()]);
+            }}
           >
             <Plus className="mr-2 h-4 w-4" />
             Add question ({questions.length}/30)
           </Button>
+          <section
+            className="glass-panel rounded-2xl p-4 space-y-3"
+            aria-label="Assessment quality review"
+          >
+            <h3 className="font-semibold">Before you publish</h3>
+            <p className="text-xs text-muted-foreground">
+              Solve each item independently. Confirm one defensible answer,
+              plausible alternatives, sufficient scenario context and an
+              explanation of the alternatives. Check relevance, accessibility
+              and fairness. These checks do not establish scientific validity.
+            </p>
+            {quality.issues.map((issue: string) => (
+              <p
+                key={issue}
+                className="text-xs text-amber-700 dark:text-amber-300"
+              >
+                {issue}
+              </p>
+            ))}
+            {quality.uncovered.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Opportunity skills not covered by this draft:{" "}
+                {quality.uncovered.join(", ")}. Uncovered skills must not be
+                interpreted as failed skills.
+              </p>
+            )}
+            {!quality.issues.length && (
+              <p className="text-xs text-muted-foreground">
+                No automated text warnings found. Human answer-key review is
+                still required.
+              </p>
+            )}
+          </section>
           <label className="flex items-start gap-3 rounded-2xl role-bg-soft p-4">
             <input
               type="checkbox"
@@ -613,8 +737,8 @@ function AssessmentEditor({
             />
             <span className="text-sm">
               <span className="font-semibold">
-                I reviewed the questions, answer key, and target. Publish this
-                version.
+                I checked relevance, approved questions, and the target. Publish
+                this version.
               </span>
               <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                 Publishing locks the content. Students get one scored attempt
@@ -633,7 +757,7 @@ function AssessmentEditor({
               {action.busy
                 ? "Saving…"
                 : publish
-                  ? "Approve & publish"
+                  ? "Publish reviewed questions"
                   : "Save draft"}
             </Button>
             <Button

@@ -46,6 +46,16 @@ interface Event {
   detail: string;
   created_at: string;
 }
+export interface CollaborationMember {
+  id: string;
+  proposal_id: string;
+  member_id: string;
+  member_name: string;
+  workspace_title: string;
+  invited_by: string;
+  permission: string;
+  status: string;
+}
 const KEY = "/api/collaborations";
 export function useCollaborations() {
   const s = useSWR<{
@@ -53,6 +63,15 @@ export function useCollaborations() {
     milestones: CollaborationMilestone[];
     updates: Update[];
     events: Event[];
+    members: CollaborationMember[];
+    files: {
+      id: string;
+      proposal_id: string;
+      uploaded_by: string;
+      title: string;
+      storage_path: string;
+      created_at: string;
+    }[];
   }>(
     KEY,
     async () => {
@@ -77,7 +96,11 @@ export async function collaborationAction(
     | "add_collaboration_milestone"
     | "post_collaboration_update"
     | "review_collaboration_milestone"
-    | "finish_collaboration",
+    | "finish_collaboration"
+    | "invite_collaboration_member"
+    | "respond_collaboration_invitation"
+    | "post_team_update"
+    | "register_collaboration_file",
   args: Record<string, unknown>,
 ) {
   const { error } = await supabase.rpc(name, args);

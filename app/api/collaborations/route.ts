@@ -22,21 +22,24 @@ export async function GET() {
         if (data.length < 500) return result;
       }
     }
-    const [proposals, milestones, updates, events] = await Promise.all([
-      rows("collaboration_proposals"),
-      rows("collaboration_milestones"),
-      rows("collaboration_updates"),
-      rows("collaboration_events"),
-    ]);
+    const [proposals, milestones, updates, events, members, files] =
+      await Promise.all([
+        rows("collaboration_proposals"),
+        rows("collaboration_milestones"),
+        rows("collaboration_updates"),
+        rows("collaboration_events"),
+        rows("collaboration_members"),
+        rows("collaboration_files"),
+      ]);
     return NextResponse.json(
-      { proposals, milestones, updates, events },
+      { proposals, milestones, updates, events, members, files },
       { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch {
     return NextResponse.json(
       {
         error:
-          "Collaboration workspaces could not load. Apply migration 202609220011_collaboration_workspaces.sql if needed, then retry.",
+          "Collaboration workspaces could not load. Apply migrations through 202609220019_collaboration_teams.sql if needed, then retry.",
       },
       { status: 503 },
     );

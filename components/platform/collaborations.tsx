@@ -4,11 +4,13 @@ import Link from "next/link";
 import { Handshake, ArrowUpRight } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase/client";
 import { usePlatformData, type Role } from "@/lib/platform-store";
 import {
   useCollaborations,
   collaborationAction,
   type Collaboration,
+  type CollaborationMember,
 } from "@/lib/collaborations";
 import {
   DataState,
@@ -168,12 +170,21 @@ export function CollaborationsWorkspace({ role }: { role: Role }) {
         <PageHeading
           eyebrow="Industry × academia"
           title="Turn shared expertise into real work."
-          description="Propose research, consultancy and live-project partnerships. Agree on scope, deliver against milestones and preserve a shared record of decisions. Private workspaces are visible only to the two participating accounts."
+          description="Research, consultancy and live-project partnerships with scoped project teams. Both original partners must approve sharing before an invited member can accept workspace access."
         />
         <DataState {...platform} retry={platform.refresh} />
         <DataState {...state} retry={state.refresh} />
         {me && state.data && !state.error && !platform.error && (
           <>
+            {state.data.members
+              .filter(
+                (m) =>
+                  m.member_id === me.id &&
+                  ["Invited", "Awaiting partner"].includes(m.status),
+              )
+              .map((m) => (
+                <TeamInvitation key={m.id} member={m} me={me.id} />
+              ))}
             <div className="glass-panel flex flex-wrap gap-3 rounded-2xl p-4">
               <Button
                 variant={browse ? "outline" : "default"}
@@ -181,12 +192,14 @@ export function CollaborationsWorkspace({ role }: { role: Role }) {
               >
                 My partnerships ({state.data.proposals.length})
               </Button>
-              <Button
-                variant={browse ? "default" : "outline"}
-                onClick={() => setBrowse(true)}
-              >
-                Explore open calls
-              </Button>
+              {role !== "student" && (
+                <Button
+                  variant={browse ? "default" : "outline"}
+                  onClick={() => setBrowse(true)}
+                >
+                  Explore open calls
+                </Button>
+              )}
               <input
                 aria-label="Search collaborations"
                 className="field flex-1"
@@ -354,6 +367,257 @@ export function CollaborationsWorkspace({ role }: { role: Role }) {
   );
 }
 
+function TeamInvitation({
+  member: m,
+  me,
+  proposal,
+}: {
+  member: CollaborationMember;
+  me: string;
+  proposal?: Collaboration;
+}) {
+  const action = useAction();
+  const principal =
+    proposal && [proposal.owner_id, proposal.proposer_id].includes(me);
+  const choices: string[] = [];
+  if (
+    principal &&
+    m.status === "Awaiting partner" &&
+    m.invited_by !== me &&
+    proposal?.status === "Accepted"
+  )
+    choices.push("Approve");
+  if (
+    principal &&
+    ["Awaiting partner", "Invited", "Accepted"].includes(m.status)
+  )
+    choices.push("Revoke");
+  if (m.member_id === me && m.status === "Invited")
+    choices.push("Accept", "Decline");
+  if (m.member_id === me && m.status === "Accepted") choices.push("Leave");
+  return (
+    <div className="glass-row space-y-3 rounded-2xl p-4">
+      <p className="text-sm font-semibold">
+        {m.workspace_title} · {m.member_name}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        {m.permission} · {m.status}
+      </p>
+      {action.feedback}
+      <div className="flex gap-2 flex-wrap">
+        {choices.map((decision) => (
+          <Button
+            key={decision}
+            variant="outline"
+            disabled={action.busy}
+            onClick={() => {
+              if (
+                window.confirm(
+                  `${decision} this invitation? Accepted members can read the full workspace, including terms and previous discussion. Contributors can post updates but cannot approve completion.`,
+                )
+              )
+                void action.run(
+                  () =>
+                    collaborationAction("respond_collaboration_invitation", {
+                      invitation: m.id,
+                      decision,
+                    }),
+                  "Invitation updated.",
+                );
+            }}
+          >
+            {decision}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}
+function TeamPanel({
+  proposal: p,
+  me,
+}: {
+  proposal: Collaboration;
+  me: string;
+}) {
+  const state = useCollaborations(),
+    platform = usePlatformData();
+  const principal = [p.owner_id, p.proposer_id].includes(me);
+  return (
+    <details className="rounded-2xl border border-border p-4">
+      <summary className="cursor-pointer font-semibold">
+        Project team & access
+      </summary>
+      <div className="mt-4 space-y-4">
+        <p className="text-xs text-muted-foreground">
+          Both partners approve sharing the full workspace. Pending invitations
+          grant no access. Revocation removes future access; previously
+          downloaded or viewed information cannot be recalled.
+        </p>
+        {principal && p.status === "Accepted" && !p.completion_requested_at && (
+          <CollaborationForm
+            action="invite_collaboration_member"
+            args={{ proposal: p.id }}
+            label="Propose team invitation"
+            confirm="Ask the other partner to approve sharing this workspace with the selected account?"
+            fields={[
+              {
+                name: "person",
+                label: "Existing account",
+                type: "select",
+                options: (platform.data?.directory ?? [])
+                  .filter(
+                    (person) =>
+                      ![p.owner_id, p.proposer_id].includes(person.id),
+                  )
+                  .map((person) => ({
+                    value: person.id,
+                    label: `${person.full_name} · ${person.role} · ${person.id.slice(0, 8)}`,
+                  })),
+              },
+              {
+                name: "access_level",
+                label: "Workspace permission",
+                type: "select",
+                options: [
+                  { value: "Observer", label: "Observer — read only" },
+                  {
+                    value: "Contributor",
+                    label: "Contributor — read and post updates",
+                  },
+                ],
+              },
+            ]}
+          />
+        )}
+        {state.data?.members
+          .filter((m) => m.proposal_id === p.id)
+          .map((m) => (
+            <TeamInvitation key={m.id} member={m} me={me} proposal={p} />
+          ))}
+      </div>
+    </details>
+  );
+}
+
+function ProjectFiles({
+  proposal: p,
+  me,
+  canUpload,
+}: {
+  proposal: Collaboration;
+  me: string;
+  canUpload: boolean;
+}) {
+  const state = useCollaborations(),
+    action = useAction();
+  return (
+    <details className="rounded-2xl border border-border p-4">
+      <summary className="cursor-pointer font-semibold">
+        Private project documents
+      </summary>
+      <div className="mt-4 space-y-4">
+        {action.feedback}
+        <p className="text-xs text-muted-foreground">
+          PDF only, maximum 10 MB. Shared with all accepted workspace members.
+          Download links expire after 60 seconds; downloaded copies cannot be
+          revoked. Upload only trusted documents you have permission to share.
+        </p>
+        {canUpload && (
+          <form
+            className="space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const f = new FormData(e.currentTarget);
+              void action.run(async () => {
+                const file = f.get("file");
+                if (
+                  !(file instanceof File) ||
+                  file.type !== "application/pdf" ||
+                  file.size > 10485760 ||
+                  file.size === 0
+                )
+                  throw new Error("Choose a PDF up to 10 MB.");
+                const path = `${me}/${p.id}/${crypto.randomUUID()}.pdf`;
+                const { error } = await supabase.storage
+                  .from("collaboration-files")
+                  .upload(path, file, {
+                    contentType: "application/pdf",
+                    upsert: false,
+                  });
+                if (error) throw error;
+                try {
+                  await collaborationAction("register_collaboration_file", {
+                    proposal: p.id,
+                    file_title: f.get("title"),
+                    path,
+                  });
+                } catch (error) {
+                  await supabase.storage
+                    .from("collaboration-files")
+                    .remove([path]);
+                  throw error;
+                }
+              }, "Project document shared.");
+            }}
+          >
+            <Field label="Document title">
+              <input
+                name="title"
+                className="field"
+                required
+                minLength={3}
+                maxLength={160}
+              />
+            </Field>
+            <Field label="Private PDF">
+              <input
+                name="file"
+                type="file"
+                accept="application/pdf"
+                required
+                className="field"
+              />
+            </Field>
+            <SaveButton busy={action.busy}>Upload and share PDF</SaveButton>
+          </form>
+        )}
+        {state.data?.files
+          .filter((f) => f.proposal_id === p.id)
+          .map((f) => (
+            <div
+              key={f.id}
+              className="glass-row rounded-2xl p-4 flex flex-wrap justify-between gap-3"
+            >
+              <span className="text-sm">
+                {f.title} · {new Date(f.created_at).toLocaleDateString()}
+              </span>
+              <Button
+                variant="outline"
+                disabled={action.busy}
+                onClick={() =>
+                  void action.run(async () => {
+                    const { data, error } = await supabase.storage
+                      .from("collaboration-files")
+                      .createSignedUrl(f.storage_path, 60, { download: true });
+                    if (error) throw error;
+                    const link = document.createElement("a");
+                    link.href = data.signedUrl;
+                    link.rel = "noopener noreferrer";
+                    link.target = "_blank";
+                    link.click();
+                  }, "Private download link created.")
+                }
+              >
+                Download
+              </Button>
+            </div>
+          ))}
+      </div>
+    </details>
+  );
+}
+
 function Partnership({
   proposal: p,
   userId,
@@ -363,6 +627,14 @@ function Partnership({
 }) {
   const state = useCollaborations();
   const owner = p.owner_id === userId;
+  const principal = owner || p.proposer_id === userId;
+  const contributor = state.data?.members.some(
+    (m) =>
+      m.proposal_id === p.id &&
+      m.member_id === userId &&
+      m.status === "Accepted" &&
+      m.permission === "Contributor",
+  );
   const open = ["Submitted", "Accepted"].includes(p.status);
   const milestones =
     state.data?.milestones.filter((m) => m.proposal_id === p.id) ?? [];
@@ -416,7 +688,17 @@ function Partnership({
           ))}
         </dl>
       </details>
-      {p.status === "Submitted" && (
+      <TeamPanel proposal={p} me={userId} />
+      <ProjectFiles
+        proposal={p}
+        me={userId}
+        canUpload={Boolean(
+          (principal || contributor) &&
+          p.status === "Accepted" &&
+          !p.completion_requested_at,
+        )}
+      />
+      {principal && p.status === "Submitted" && (
         <CollaborationForm
           action="decide_collaboration_proposal"
           args={{
@@ -544,7 +826,7 @@ function Partnership({
           Partner discussion & delivery evidence ({updates.length})
         </summary>
         <div className="mt-4 space-y-4">
-          {open && (
+          {open && principal && (
             <>
               <CollaborationForm
                 action="post_collaboration_update"
@@ -612,7 +894,27 @@ function Partnership({
           ))}
         </div>
       </details>
-      {p.status === "Accepted" && (
+      {!principal &&
+        contributor &&
+        p.status === "Accepted" &&
+        !p.completion_requested_at && (
+          <CollaborationForm
+            action="post_team_update"
+            args={{ proposal: p.id }}
+            label="Post team update"
+            fields={[
+              { name: "message", label: "Project update", min: 10, max: 4000 },
+              {
+                name: "evidence",
+                label: "Optional evidence URL",
+                type: "url",
+                optional: true,
+                max: 2000,
+              },
+            ]}
+          />
+        )}
+      {principal && p.status === "Accepted" && (
         <div className="space-y-3 border-t border-border pt-4">
           <h3 className="font-semibold">Completion review</h3>
           <p className="text-sm text-muted-foreground">

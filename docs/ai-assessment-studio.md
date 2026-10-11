@@ -1,6 +1,8 @@
 # Grounded AI assessment drafting
 
-Industry Assessment Studio now uses the versioned `industry-assessment-v1` system prompt in `lib/ai/assessment-prompts.mjs`. Prompts guide inference; this is not model training or fine-tuning. The brief is passed as separate untrusted JSON context, with the actual industry domain, skills, level and focus. Non-software roles should not receive assumed software questions.
+Update: migration 018 replaces the per-instance limiter described below with a shared per-account database allowance across AI endpoints. See `remaining-implementation-rollout.md` for activation and current limits.
+
+Industry Assessment Studio now uses the versioned `industry-assessment-v2` system prompt in `lib/ai/assessment-prompts.mjs`, with an explicit skill-coverage blueprint. See `assessment-quality.md` for the new authoring and review checks. Prompts guide inference; this is not model training or fine-tuning. The brief is passed as separate untrusted JSON context, with the actual industry domain, skills, level and focus. Non-software roles should not receive assumed software questions.
 
 Generation requires an authenticated industry profile, an explicit consent field, bounded role/skill inputs and a configured server-side GEMINI_API_KEY. The UI explains what brief fields go to Google; authors must not include confidential or personal material. Model configuration uses GEMINI_MODEL, retaining the existing default. No new migration is needed.
 

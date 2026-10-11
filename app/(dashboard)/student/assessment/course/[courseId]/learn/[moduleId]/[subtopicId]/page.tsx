@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { AssessmentRunner } from "@/components/platform/assessment-runner";
 import { PageHeading } from "@/components/platform/primitives";
-import { getCourseDetails } from "@/lib/courses-data";
+import { getPublishedTrack } from "@/lib/learning-track-server";
 export default async function Page({
   params: pendingParams,
 }: {
   params: Promise<{ courseId: string; moduleId: string; subtopicId: string }>;
 }) {
   const params = await pendingParams;
-  const course = getCourseDetails(params.courseId);
+  const course = await getPublishedTrack(params.courseId);
   const courseModule = course?.modules.find((m) => m.id === params.moduleId);
   const topic = courseModule?.subTopics.find((s) => s.id === params.subtopicId);
   if (!course || !courseModule || !topic) notFound();
@@ -30,8 +30,8 @@ export default async function Page({
         />
         <div className="rounded-2xl border border-border bg-card p-5 text-sm leading-6 text-muted-foreground">
           Use the learning resources on the course page to study this topic.
-          Completing this practice records this subtopic only; a courseModule is
-          complete after all its subtopics are submitted.
+          Submitting this practice records participation, not verified
+          proficiency, course accreditation or a provider-issued certificate.
         </div>
         <AssessmentRunner request={params} courseMode />
       </div>

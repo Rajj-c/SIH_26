@@ -52,6 +52,22 @@ const roleLabels: Record<string, string> = {
 
 export const roleNavigation: Record<string, NavItem[]> = {
   student: [
+    {
+      label: "Institution Invitations",
+      href: "/student/roster",
+      icon: Landmark,
+    },
+    {
+      label: "Challenges & Mentorship",
+      href: "/student/initiatives",
+      icon: Target,
+    },
+    { label: "Project Teams", href: "/student/collaborations", icon: Users },
+    {
+      label: "Sessions & Events",
+      href: "/student/sessions",
+      icon: CalendarDays,
+    },
     { label: "Dashboard", href: "/student", icon: LayoutDashboard },
     {
       label: "Recruitment Tracker",
@@ -77,6 +93,11 @@ export const roleNavigation: Record<string, NavItem[]> = {
     },
     { label: "Skill Report", href: "/student/report", icon: BarChart3 },
     { label: "Portfolio", href: "/student/portfolio", icon: FileText },
+    {
+      label: "Credential Reviews",
+      href: "/student/credential-reviews",
+      icon: FileText,
+    },
     { label: "Marketplace", href: "/student/marketplace", icon: Briefcase },
     { label: "Applications", href: "/student/applications", icon: Target },
     {
@@ -86,6 +107,32 @@ export const roleNavigation: Record<string, NavItem[]> = {
     },
   ],
   industry: [
+    {
+      label: "Question Bank",
+      href: "/industry/question-bank",
+      icon: ClipboardCheck,
+    },
+    { label: "Outcome Explorer", href: "/industry/outcomes", icon: TrendingUp },
+    {
+      label: "Challenges & Mentorship",
+      href: "/industry/initiatives",
+      icon: Target,
+    },
+    {
+      label: "Organization Trust",
+      href: "/industry/organization",
+      icon: Building2,
+    },
+    {
+      label: "Learning Track Studio",
+      href: "/industry/learning-tracks",
+      icon: BookOpen,
+    },
+    {
+      label: "Sessions & Events",
+      href: "/industry/sessions",
+      icon: CalendarDays,
+    },
     { label: "Dashboard", href: "/industry", icon: LayoutDashboard },
     {
       label: "Collaborations",
@@ -118,6 +165,31 @@ export const roleNavigation: Record<string, NavItem[]> = {
     },
   ],
   academician: [
+    {
+      label: "Question Reviews",
+      href: "/academician/question-bank",
+      icon: ClipboardCheck,
+    },
+    {
+      label: "Institution Invitations",
+      href: "/academician/roster",
+      icon: Landmark,
+    },
+    {
+      label: "Challenges & Mentorship",
+      href: "/academician/initiatives",
+      icon: Target,
+    },
+    {
+      label: "Learning Track Studio",
+      href: "/academician/learning-tracks",
+      icon: BookOpen,
+    },
+    {
+      label: "Sessions & Events",
+      href: "/academician/sessions",
+      icon: CalendarDays,
+    },
     { label: "Dashboard", href: "/academician", icon: LayoutDashboard },
     {
       label: "Collaborations",
@@ -156,6 +228,42 @@ export const roleNavigation: Record<string, NavItem[]> = {
     { label: "Applicants", href: "/academician/candidates", icon: Users },
   ],
   institution: [
+    {
+      label: "Question Reviews",
+      href: "/institution/question-bank",
+      icon: ClipboardCheck,
+    },
+    {
+      label: "Outcome Explorer",
+      href: "/institution/outcomes",
+      icon: TrendingUp,
+    },
+    { label: "Roster Import", href: "/institution/roster", icon: Users },
+    {
+      label: "Challenges & Mentorship",
+      href: "/institution/initiatives",
+      icon: Target,
+    },
+    {
+      label: "Organization Trust",
+      href: "/institution/organization",
+      icon: Building2,
+    },
+    {
+      label: "Learning Track Studio",
+      href: "/institution/learning-tracks",
+      icon: BookOpen,
+    },
+    {
+      label: "Sessions & Events",
+      href: "/institution/sessions",
+      icon: CalendarDays,
+    },
+    {
+      label: "Credential Reviews",
+      href: "/institution/credential-reviews",
+      icon: FileText,
+    },
     { label: "Dashboard", href: "/institution", icon: LayoutDashboard },
     {
       label: "Collaborations",

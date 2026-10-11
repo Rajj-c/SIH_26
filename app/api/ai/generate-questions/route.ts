@@ -3,11 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import {
   ASSESSMENT_PROMPT_VERSION,
   assessmentSystemPrompt,
+  blueprintInstructions,
   validateAssessmentInput,
   validateGeneratedQuestions,
 } from "@/lib/ai/assessment-prompts.mjs";
 export const dynamic = "force-dynamic";
-const requests = new Map<string, number>();
 const reply = (body: unknown, status = 200) =>
   NextResponse.json(body, {
     status,
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     return reply(
       {
         error:
-          "Provide consent, a role title, 1–30 skills, a supported level and 1–15 questions. Keep description under 6000 characters and custom topics under 2500.",
+          "Provide consent, a role title, selected skills, a supported level/focus and 1–15 questions, with at least one question per selected skill. Keep description under 6000 characters and custom topics under 2500.",
       },
       400,
     );
@@ -52,15 +52,22 @@ export async function POST(req: Request) {
       },
       503,
     );
-  const now = Date.now();
-  for (const [id, time] of requests)
-    if (now - time >= 60000) requests.delete(id);
-  if (requests.has(user.id))
+  const { data: retryAfter, error: limitError } =
+    await db.rpc("reserve_ai_request");
+  if (limitError || !Number.isInteger(retryAfter) || retryAfter < 0)
     return reply(
-      { error: "Wait one minute before generating another draft." },
+      {
+        error: "AI request limits unavailable. Apply migration 018 and retry.",
+      },
+      503,
+    );
+  if (retryAfter > 0)
+    return reply(
+      {
+        error: `AI request allowance reached. Retry in ${retryAfter} seconds.`,
+      },
       429,
     );
-  requests.set(user.id, now);
   try {
     const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     const response = await fetch(
@@ -75,7 +82,11 @@ export async function POST(req: Request) {
         },
         signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: assessmentSystemPrompt }] },
+          systemInstruction: {
+            parts: [
+              { text: assessmentSystemPrompt + "\n" + blueprintInstructions },
+            ],
+          },
           contents: [
             { role: "user", parts: [{ text: JSON.stringify(input) }] },
           ],
@@ -116,6 +127,7 @@ export async function POST(req: Request) {
         source: "ai",
         promptVersion: ASSESSMENT_PROMPT_VERSION,
         requiresReview: true,
+        blueprint: input.blueprint,
       });
     } catch {
       return reply(

@@ -10,11 +10,22 @@ export interface Notification {
   created_at: string;
   read_at: string | null;
 }
-export function useNotifications() {
-  const s = useSWR<{ items: Notification[]; unread: number }>(
-    KEY,
-    async () => {
-      const r = await fetch(KEY, { cache: "no-store" });
+export function useNotifications(options?: {
+  unreadOnly: boolean;
+  cursor: string | null;
+}) {
+  const params = new URLSearchParams();
+  if (options?.unreadOnly) params.set("unread", "true");
+  if (options?.cursor) params.set("cursor", options.cursor);
+  const key = params.size ? `${KEY}?${params}` : KEY;
+  const s = useSWR<{
+    items: Notification[];
+    unread: number;
+    nextCursor: string | null;
+  }>(
+    key,
+    async (url: string) => {
+      const r = await fetch(url, { cache: "no-store" });
       const b = await r.json();
       if (!r.ok) throw new Error(b.error);
       return b;
@@ -33,5 +44,8 @@ export async function markNotificationsRead(id?: string) {
     ? await supabase.rpc("mark_notification_read", { notification: id })
     : await supabase.rpc("mark_all_notifications_read");
   if (error) throw new Error(error.message);
-  await mutate(KEY);
+  await mutate(
+    (key) =>
+      typeof key === "string" && (key === KEY || key.startsWith(`${KEY}?`)),
+  );
 }

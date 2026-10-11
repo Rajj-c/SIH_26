@@ -1,5 +1,7 @@
 # Industry–academia collaboration workspaces — increment 11
 
+Update: migration 019 adds jointly approved project teams and private PDF attachments. Accepted invited members can now access the workspace under explicit contributor/observer permissions. The two-account-only limitations below describe increment 11, not current behavior. See `remaining-implementation-rollout.md`.
+
 Apply `supabase/migrations/202609220011_collaboration_workspaces.sql` once after increment 10, then refresh. This adds private partnership records and integrates actual activity with the notification inbox. No example proposals are inserted.
 
 ## Workflow

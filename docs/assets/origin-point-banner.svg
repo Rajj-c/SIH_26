@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">Origin Point</title>
+  <desc id="desc">Academia meets industry. Four connected roles by Tech Pioneers.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101d3d"/><stop offset="1" stop-color="#07101f"/></linearGradient>
+    <linearGradient id="glass" x2="0" y2="1"><stop stop-color="#fff" stop-opacity=".13"/><stop offset="1" stop-color="#fff" stop-opacity=".03"/></linearGradient>
+  </defs>
+  <rect width="1200" height="420" rx="28" fill="url(#bg)"/>
+  <circle cx="1120" cy="50" r="220" fill="#2563eb" opacity=".12"/>
+  <circle cx="830" cy="400" r="220" fill="#67e8f9" opacity=".04"/>
+  <path d="M650 0v420M0 338h1200" stroke="#cbd5e1" stroke-opacity=".08"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <rect x="56" y="48" width="248" height="30" rx="15" fill="#60a5fa" fill-opacity=".12" stroke="#60a5fa" stroke-opacity=".35"/>
+    <text x="74" y="68" fill="#bfdbfe" font-size="12" letter-spacing="2">TECH PIONEERS / SIH 2026</text>
+    <text x="56" y="154" fill="#fff" font-size="66" font-weight="700" letter-spacing="-3">Origin Point</text>
+    <text x="59" y="204" fill="#93c5fd" font-size="25">Where skills meet opportunity.</text>
+    <text x="59" y="252" fill="#b9c7df" font-size="17">A connected academia–industry collaboration portal.</text>
+    <text x="59" y="282" fill="#b9c7df" font-size="17">From first assessment to the next professional chapter.</text>
+    <text x="56" y="382" fill="#9aaecf" font-size="13" letter-spacing="2">ASSESS / LEARN / COLLABORATE / GROW</text>
+    <g fill="url(#glass)" stroke="#cbd5e1" stroke-opacity=".25">
+      <rect x="730" y="83" width="190" height="96" rx="20"/><rect x="944" y="83" width="190" height="96" rx="20"/>
+      <rect x="730" y="215" width="190" height="96" rx="20"/><rect x="944" y="215" width="190" height="96" rx="20"/>
+    </g>
+    <path d="M825 179v36m214-36v36M920 131h24M920 263h24" stroke="#60a5fa" stroke-width="2" opacity=".6"/>
+    <g fill="#93c5fd"><circle cx="759" cy="110" r="5"/><circle cx="973" cy="110" r="5"/><circle cx="759" cy="242" r="5"/><circle cx="973" cy="242" r="5"/></g>
+    <g fill="#fff" font-size="19" font-weight="600"><text x="751" y="148">Students</text><text x="965" y="148">Industry</text><text x="751" y="280">Academicians</text><text x="965" y="280">Institutions</text></g>
+    <text x="750" y="381" fill="#9aaecf" font-size="13" letter-spacing="2">FOUR ROLES. ONE SHARED JOURNEY.</text>
+  </g>
+</svg>

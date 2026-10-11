@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase/client";
 import { OriginWordmark } from "@/components/shared/origin-logo";
+import { EvaluatorAccess } from "@/components/platform/evaluator-access";
 
 const VALID_ROLES = ["student", "industry", "academician", "institution"];
 const OTP_LENGTH = 6;
@@ -708,6 +709,12 @@ function LoginForm() {
           </motion.div>
         )}
       </AnimatePresence>
+      <EvaluatorAccess disabled={isLoading || isGoogleLoading} onChoose={(account) => {
+        setEmail(account.email);
+        setPassword(account.password);
+        setLoginMode("password");
+        setFormError("");
+      }} />
     </motion.div>
   );
 }

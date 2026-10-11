@@ -30,6 +30,7 @@ import {
   useAction,
 } from "./primitives";
 import { SkillSuggestions } from "./skill-suggestions";
+import { AILearningPlanner } from "./ai-learning-planner";
 
 function resourcesFor(skill: string, opportunities: Opportunity[]) {
   return opportunities.filter(
@@ -78,6 +79,10 @@ export function LearningPlan({
         {data && goals.data && !platform.error && !goals.error && (
           <>
             {action.feedback}
+            <AILearningPlanner
+              opportunities={opportunities}
+              onSaved={goals.refresh}
+            />
             <div className="grid gap-4 sm:grid-cols-3">
               <Metric label="Active goals" value={active.length} />
               <Metric

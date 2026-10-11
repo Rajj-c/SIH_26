@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Sparkles,
   Sliders,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { IndustryQuestion } from "@/lib/industry-assessments";
+import { buildAssessmentBlueprint } from "@/lib/ai/assessment-prompts.mjs";
 
 interface AIScreeningAssistantProps {
   roleTitle: string;
@@ -38,7 +39,7 @@ export function AIScreeningAssistant({
 }: AIScreeningAssistantProps) {
   const [difficulty, setDifficulty] = useState<
     "Junior / Intern" | "Mid-Level" | "Senior / Lead"
-  >("Mid-Level");
+  >("Junior / Intern");
   const [categoryFocus, setCategoryFocus] = useState<string>("Balanced");
   const [count, setCount] = useState<number>(5);
   const [customTopics, setCustomTopics] = useState<string>("");
@@ -50,6 +51,31 @@ export function AIScreeningAssistant({
   const [loadingStep, setLoadingStep] = useState<string>("");
   const [consent, setConsent] = useState(false);
   const [generationError, setGenerationError] = useState("");
+  const [excludedSkills, setExcludedSkills] = useState<string[]>([]);
+  const selectedSkills = [...new Set(skills)].filter(
+    (s) => !excludedSkills.includes(s),
+  );
+  let blueprint: { questionNumber: number; skill: string; approach: string }[] =
+    [];
+  let blueprintError = "";
+  try {
+    blueprint = buildAssessmentBlueprint(selectedSkills, count, categoryFocus);
+  } catch (e) {
+    blueprintError =
+      e instanceof Error ? e.message : "Choose skills and question count.";
+  }
+  const briefSignature = JSON.stringify({
+    roleTitle,
+    selectedSkills,
+    description,
+    difficulty,
+    categoryFocus,
+    count,
+    customTopics,
+    consent,
+  });
+  const currentBrief = useRef(briefSignature);
+  currentBrief.current = briefSignature;
 
   const focusOptions = [
     {
@@ -75,6 +101,7 @@ export function AIScreeningAssistant({
   ];
 
   async function handleGenerate() {
+    const requestedBrief = briefSignature;
     setIsLoading(true);
     setLoadingStep("Waiting for Gemini to return a draft…");
     setGenerationError("");
@@ -86,7 +113,7 @@ export function AIScreeningAssistant({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: roleTitle,
-          skills,
+          skills: selectedSkills,
           consent,
           description: description || "",
           difficulty,
@@ -97,6 +124,10 @@ export function AIScreeningAssistant({
       });
 
       const resData = await res.json();
+      if (currentBrief.current !== requestedBrief)
+        throw new Error(
+          "The assessment brief changed during generation. Existing questions were preserved; generate again for the current brief.",
+        );
       if (!res.ok) {
         throw new Error(resData.error || "Failed to generate questions");
       }
@@ -106,7 +137,7 @@ export function AIScreeningAssistant({
         const suggestedTitle = roleTitle
           ? `${roleTitle} Competency Screening (${difficulty})`
           : undefined;
-        const suggestedSummary = `Draft ${resData.questions.length}-question assessment covering ${skills.slice(0, 3).join(", ")} (${difficulty}). Questions and answer keys require author review before publication.`;
+        const suggestedSummary = `Draft ${resData.questions.length}-question assessment covering ${selectedSkills.join(", ")} (${difficulty}). Questions and answer keys require author review before publication.`;
 
         onQuestionsGenerated(resData.questions, {
           title: suggestedTitle,
@@ -139,8 +170,7 @@ export function AIScreeningAssistant({
           </div>
           <p className="text-xs text-muted-foreground">
             Generate custom screening questions tailored directly to this
-            role&apos;s job description, required tech stack, and experience
-            level.
+            role&apos;s job description, selected skills, and experience level.
           </p>
         </div>
 
@@ -148,7 +178,10 @@ export function AIScreeningAssistant({
           type="button"
           onClick={handleGenerate}
           disabled={
-            isLoading || !consent || !roleTitle.trim() || !skills.length
+            isLoading ||
+            !consent ||
+            !roleTitle.trim() ||
+            Boolean(blueprintError)
           }
           className="relative overflow-hidden bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white font-medium shadow-md shadow-amber-500/10 shrink-0 cursor-pointer h-9 px-4 text-xs"
         >
@@ -172,10 +205,10 @@ export function AIScreeningAssistant({
           checked={consent}
           onChange={(e) => setConsent(e.target.checked)}
         />
-        Allow sending this role title, skill list, description and custom topics
-        to Google Gemini. Do not include personal or confidential information.
-        Generated questions are unverified drafts; review every answer before
-        publishing.
+        Allow sending this role title, selected skill list, question blueprint,
+        description and custom topics to Google Gemini. Do not include personal
+        or confidential information. Generated questions are unverified drafts;
+        review every answer before publishing.
       </label>
       {generationError && (
         <p role="alert" className="mt-3 text-sm text-destructive">
@@ -200,22 +233,59 @@ export function AIScreeningAssistant({
               <TagIcon className="h-3 w-3" /> Grounding Skills:
             </span>
             {skills.map((skill) => (
-              <span
+              <label
                 key={skill}
                 className="inline-flex items-center rounded-md bg-amber-500/10 dark:bg-amber-400/10 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300 border border-amber-500/20"
               >
+                <input
+                  type="checkbox"
+                  checked={!excludedSkills.includes(skill)}
+                  onChange={(e) =>
+                    setExcludedSkills((current) =>
+                      e.target.checked
+                        ? current.filter((s) => s !== skill)
+                        : [...current, skill],
+                    )
+                  }
+                  className="mr-2"
+                />
                 {skill}
-              </span>
+              </label>
             ))}
           </div>
         ) : (
           <p className="text-[11px] text-muted-foreground italic flex items-center gap-1">
             <Info className="h-3 w-3 text-amber-500" />
-            No skills detected on this role yet. We will formulate general
-            software engineering questions or use your custom topics below.
+            Add actual required skills to this opportunity before generating
+            questions. No generic questions will be substituted.
           </p>
         )}
       </div>
+
+      <details className="mt-4 rounded-xl border border-border p-3" open>
+        <summary className="cursor-pointer text-xs font-semibold">
+          Question blueprint — review before generating
+        </summary>
+        {blueprintError ? (
+          <p className="mt-2 text-xs text-destructive">
+            {blueprintError} Select fewer skills above or increase the question
+            count.
+          </p>
+        ) : (
+          <ol className="mt-3 space-y-2 text-xs text-muted-foreground">
+            {blueprint.map((slot) => (
+              <li key={slot.questionNumber}>
+                {slot.questionNumber}. {slot.skill} — {slot.approach}
+              </li>
+            ))}
+          </ol>
+        )}
+        <p className="mt-3 text-xs text-muted-foreground">
+          Approaches are generation targets, not independently verified question
+          types. Each selected skill receives at least one question; a single
+          item is limited evidence, not proof of proficiency.
+        </p>
+      </details>
 
       {/* Interactive Controls Bar */}
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -270,8 +340,8 @@ export function AIScreeningAssistant({
           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
             <Sliders className="h-3 w-3 text-amber-500" /> Question Count
           </label>
-          <div className="grid grid-cols-4 gap-1 rounded-xl bg-muted/50 p-1 border border-border">
-            {[3, 5, 8, 10].map((num) => {
+          <div className="grid grid-cols-5 gap-1 rounded-xl bg-muted/50 p-1 border border-border">
+            {[3, 5, 8, 10, 15].map((num) => {
               const active = count === num;
               return (
                 <button
@@ -316,13 +386,14 @@ export function AIScreeningAssistant({
         {showAdvanced && (
           <div className="mt-2 space-y-2 rounded-xl border border-border bg-background p-3">
             <p className="text-[11px] text-muted-foreground">
-              Paste specific paragraphs from your internal JD, required APIs
-              (e.g. Next.js App Router, gRPC, Redis caching), or edge-case
-              engineering scenarios you want candidates tested on:
+              Describe non-confidential workplace tasks, constraints and
+              expected decisions relevant to this role. Include necessary
+              context; do not assume a software role.
             </p>
             <textarea
               className="field min-h-20 text-xs font-mono"
-              placeholder="e.g. Must evaluate candidate on PostgreSQL transaction isolation levels, React 19 server actions, handling websocket reconnects, and rate limiting."
+              placeholder="Describe a realistic task, the available evidence, constraints, and what a good decision should consider."
+              maxLength={2500}
               value={customTopics}
               onChange={(e) => setCustomTopics(e.target.value)}
               rows={3}

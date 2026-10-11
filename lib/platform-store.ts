@@ -4,6 +4,7 @@ import useSWR, { mutate } from "swr";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { skillMatch, uniqueSkills } from "@/lib/skill-taxonomy.mjs";
+import { isWorkspaceCacheKey } from "@/lib/workspace-cache.mjs";
 
 export type Role = "student" | "industry" | "academician" | "institution";
 export type OpportunityType =
@@ -226,19 +227,7 @@ export function useAuthCacheBoundary() {
       const nextUser = session?.user?.id ?? null;
       if (currentUser !== undefined && nextUser !== currentUser) {
         void mutate(
-          (key) =>
-            typeof key === "string" &&
-            [
-              "/api/platform",
-              "/api/industry-assessments",
-              "/api/learning-goals",
-              "/api/learning-programs",
-              "/api/recruitment",
-              "/api/notifications",
-              "/api/collaborations",
-              "/api/application-tracking",
-              "/api/supervision",
-            ].includes(key),
+          isWorkspaceCacheKey,
           undefined,
           { revalidate: !!nextUser },
         );
@@ -255,19 +244,7 @@ export async function refreshPlatform() {
 }
 export async function clearPlatformCache() {
   await mutate(
-    (key) =>
-      typeof key === "string" &&
-      [
-        "/api/platform",
-        "/api/industry-assessments",
-        "/api/learning-goals",
-        "/api/learning-programs",
-        "/api/recruitment",
-        "/api/notifications",
-        "/api/collaborations",
-        "/api/application-tracking",
-        "/api/supervision",
-      ].includes(key),
+    isWorkspaceCacheKey,
     undefined,
     { revalidate: false },
   );

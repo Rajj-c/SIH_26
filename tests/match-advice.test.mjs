@@ -22,6 +22,10 @@ function harness({
   const queries = [],
     sent = [];
   const db = {
+    rpc: async (name) => {
+      assert.equal(name, "reserve_ai_request");
+      return { data: sent.length ? 60 : 0, error: null };
+    },
     auth: { getUser: async () => ({ data: { user } }) },
     from(table) {
       const filters = [];

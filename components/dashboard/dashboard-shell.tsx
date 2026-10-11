@@ -6,6 +6,7 @@ import { TopBar } from "@/components/dashboard/top-bar";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 
 import { RoleProvider } from "@/lib/role-context";
+import { DemoCohortBanner } from "@/components/platform/demo-cohort-banner";
 
 interface DashboardShellProps {
   role?: string;
@@ -40,6 +41,7 @@ export function DashboardShell({
             tabIndex={-1}
             className="dashboard-main mx-auto w-full max-w-[1600px] min-w-0 flex-1 p-4 pb-24 md:p-6 md:pb-8"
           >
+            <DemoCohortBanner />
             {children}
           </main>
         </div>

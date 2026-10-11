@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { explainReadiness } from "@/lib/readiness.mjs";
 export const dynamic = "force-dynamic";
-// Best-effort per-instance protection; provider quotas remain necessary across replicas.
-const requests = new Map<string, number>();
 const reply = (body: unknown, status = 200) =>
   NextResponse.json(body, {
     status,
@@ -49,14 +47,22 @@ export async function POST(req: Request) {
   if (profileError || profile?.role !== "student")
     return reply({ error: "Student access required." }, 403);
   const now = Date.now();
-  for (const [id, time] of requests)
-    if (now - time > 60000) requests.delete(id);
-  if (requests.has(user.id))
+  const { data: retryAfter, error: limitError } =
+    await db.rpc("reserve_ai_request");
+  if (limitError || !Number.isInteger(retryAfter) || retryAfter < 0)
     return reply(
-      { error: "Please wait a minute before requesting another explanation." },
+      {
+        error: "AI request limits unavailable. Apply migration 018 and retry.",
+      },
+      503,
+    );
+  if (retryAfter > 0)
+    return reply(
+      {
+        error: `AI request allowance reached. Retry in ${retryAfter} seconds.`,
+      },
       429,
     );
-  requests.set(user.id, now);
   try {
     const { data: o, error } = await db
       .from("opportunities")

@@ -1,72 +1,220 @@
-# Origin Point
+<div align="center">
 
-Academia–industry collaboration portal for students, industry, academicians, and institutions.
+![Origin Point — connect learning to opportunity](docs/assets/origin-point-banner.svg)
 
-## Data policy
+**One platform. Four connected roles. A clearer path from learning to opportunity.**
 
-All account and workflow records are stored in Supabase PostgreSQL. Uploaded evidence is stored in a private Supabase Storage bucket. There are no seeded accounts, employers, opportunities, applications, scores, or dashboard metrics, and no localStorage business-data fallback. An empty database produces honest empty states; a missing migration produces a setup error.
+![Next.js](https://img.shields.io/badge/Next.js-15-111827?style=flat-square&logo=nextdotjs)
+![React](https://img.shields.io/badge/React-19-111827?style=flat-square&logo=react)
+![Supabase](https://img.shields.io/badge/Supabase-Auth%20%C2%B7%20Postgres%20%C2%B7%20Storage-111827?style=flat-square&logo=supabase)
+![Gemini](https://img.shields.io/badge/Gemini-Optional%20AI-111827?style=flat-square&logo=googlegemini)
+![Status](https://img.shields.io/badge/Status-Working%20prototype-2563eb?style=flat-square)
 
-The two authored curriculum tracks in `lib/courses-data.ts` are educational content, not user activity. Progress is saved only after a real assessment submission. Gemini-generated questions are explicitly labelled practice: they are not industry-approved exams or verified certifications.
+[The platform](#four-portals-one-connected-workflow) · [Run locally](#run-locally) · [Evaluate](#evaluate-the-prototype) · [Documentation](#go-deeper)
 
-## Implemented workflows
+</div>
 
-- Role-specific profiles for students, industry, faculty, and institutions, including names, organizations, interests, skills, and credentials.
-- Portfolio records for certifications, projects, education, experience, achievements, and documents. Evidence remains self-reported unless independently verified by an administrator.
-- Publishing internships, jobs, apprenticeships, training, workshops, mentorship, FDPs, faculty internships, consultancy, research, and live projects.
-- Saved opportunities, skill-overlap recommendations, duplicate-safe applications, recruitment stages, feedback, and completion progress.
-- Student and faculty institution-membership requests, institution approval, and analytics based on actual approved-member activity.
-- Server-generated practice assessments, private answer keys, server-side scoring, immutable submissions, reports, and per-subtopic learning progress.
-- JSON exports and responsive role-themed workspaces with loading, error, and empty states.
+---
 
-## Setup
+## Built for the gap between education and employment
 
-Use Node.js 22 or 24 LTS.
+Students need to understand which skills matter and how to turn learning into experience. Industry needs evidence of capability. Faculty need practical exposure. Institutions need visibility into the journey—not just a final placement number.
 
-1. Run `npm ci`.
-2. Copy `.env.example` to `.env.local` and configure your project credentials. Never commit secrets.
-3. Back up the existing Supabase project and review then apply `supabase/migrations/202609210001_real_platform.sql` **once**, using Supabase SQL Editor or your authenticated migration tooling. It extends existing profiles, replaces profile policies with owner-scoped policies, creates the workflow schema and private bucket, and backfills profiles only for existing real Auth users. It does not insert demonstration data. Next apply `supabase/migrations/202609210002_industry_assessments.sql` once, in order. This adds industry-authored assessments, private question banks, and assessment-backed skill evidence. Do not rerun the first migration if it is already applied.
-4. In Supabase Auth, enable email authentication and allow your exact application callback URL (`http://localhost:3000/auth/callback` locally, your HTTPS URL in production). Configure Google OAuth only if using Google sign-in.
-5. Configure a verified Resend sender. Set `NEXT_PUBLIC_APP_URL` to your exact HTTPS deployment origin before production password recovery.
-6. Set a Gemini API key and a model available to your project for AI assessments. Without it, assessments show a configuration error; other features remain usable.
-7. Run `npm run dev` and open http://localhost:3000.
+**Origin Point** connects those needs through persistent, role-based workflows: skill assessment, learning, applications, supervised internships, recruitment and institutional oversight.
 
-The app keys alone cannot run SQL migrations. A connected Supabase management integration, SQL Editor access, or database migration credentials are required to apply the schema. Until the migration is applied, the new workspace and custom email rate-limiting endpoints are not ready for live use.
+> **Tech Pioneers · SIH 2026**<br>
+> **SIH26044** — Portal for Academia–Industry collaboration for Skill Mapping, Internships and Placement<br>
+> **Theme:** Smart Automation · **Ministry:** Ministry of Ayush<br>
+> Submission context, not an endorsement, accreditation or production-deployment claim.
 
-## Industry assessments and readiness
+## Four portals. One connected workflow.
 
-Industry accounts can author technical, aptitude, and scenario-based soft-skill MCQs in **Assessment Studio**, linked to an opportunity they own. Drafts and answer keys are private. Publishing records the author's approval and locks the version; a revised version keeps its own history. This is author approval, not independent organisation verification.
+| Portal | What you can do | How it connects |
+| :-- | :-- | :-- |
+| **Student** | Build a portfolio, assess skills, explore opportunities, plan learning, apply and track progress. | Share application evidence with recruiters and progress with an approved institution. |
+| **Industry** | Publish opportunities and programs, author assessments, manage recruitment and review internship work. | Define skill requirements, review applicants and guide practical learning. |
+| **Academician** | Explore FDPs and faculty internships, supervise students and participate in research collaborations. | Accept supervision assignments and join consent-based industry workspaces. |
+| **Institution** | Approve memberships, coordinate supervision, review credentials and inspect readiness/outcome analytics. | Monitor the authorized cohort using saved records and explicit access rules. |
 
-Students use **Industry Assessments** for one scored attempt per published version. Start/resume returns no answer key. Submitted answers are scored server-side and saved atomically with per-competency evidence. Raw reports remain private to the student and approved institution; recruiters see evidence summaries only after portfolio-sharing consent through an application. No live demonstration users or questions are inserted.
+```mermaid
+flowchart LR
+    A[Industry requirements] --> B[Assess and map skills]
+    B --> C[Learn and build evidence]
+    C --> D[Apply and recruit]
+    D --> E[Internship or placement]
+    E --> F[Reviewed outcomes]
+    G[Faculty supervision] --> E
+    H[Institution oversight] --> C
+    H --> F
+```
 
-**Career Readiness** compares an opportunity's exact skill names against self-declared skills and the latest industry assessment evidence. It shows separate missing, self-declared, below-target, and assessment-backed states. Related learning programmes come from actual published opportunities. Qualification/availability eligibility rules, skill aliases, proficiency weights, and practical evaluations remain planned; no complete eligibility or employability score is claimed.
+## What makes the prototype different
 
-Reports use each assessment's own target and show the latest result per competency rather than averaging incomparable employer and practice thresholds. MCQ scores include the question count; they are unproctored, not certificates. An unfinished attempt can be reopened but selected answers are not saved until submission. The list currently shows the latest 100 accessible assessments.
+### Evidence before scores
 
-## Access and privacy
+Self-declared skills, assessment-backed evidence, learning participation and reviewed outcomes remain distinct. Matching explains skill coverage and gaps; it is **not a hiring probability or a guarantee of employability**.
 
-- Normal app operations use the signed-in user's Supabase session and row-level security. The service-role key stays server-side for email delivery, rate limits, and assessment scoring.
-- Assigned roles cannot be changed by editing a profile.
-- Directory entries omit account email. Student/faculty discoverability is opt-in; industry/institution professional directory entries are visible to signed-in members.
-- Applying shares the applicant's portfolio and attached documents with that opportunity owner. Institution approval shares member portfolio, documents, applications, and assessment progress with that institution.
-- Documents use 60-second signed links after permission checks. Issued links remain valid until expiry.
-- Applicants cannot edit recruiter decisions, self-verify credentials, or submit their own scores.
-- The match percentage is normalized exact skill-name overlap, not an employability score or an AI prediction.
+### Connected workflows, not disconnected dashboards
+
+Applications have shared timelines. Internship acceptance leads to milestones, progress reports and authorized review. Written job offers and two-party joining confirmations are separate events. Institution dashboards reflect approved membership and saved activity.
+
+### AI with context and boundaries
+
+Gemini supports practice questions, assessment-authoring drafts, match explanations and learning-plan drafts. Relevant prompts and validation shape outputs; **this is API-based prompting, not a custom-trained model**. Consent, private answer keys, server-side scoring and shared per-account allowances apply where implemented. Provider failure does not create invented results.
+
+### A considered interface
+
+Glassmorphism surfaces, role-themed workspaces, subtle hover interactions, responsive navigation and clear loading/error/empty states make complex workflows easier to follow.
+
+## Feature highlights
+
+- **Skills & portfolios:** projects, certifications, private documents, canonical skill aliases, assessment reports, readiness views and credential-review history.
+- **Assessments:** industry-authored versioned questionnaires, private answer keys, server-side scoring, assessment-gated applications and independently reviewed question-bank workflows.
+- **Learning:** publisher-authored tracks, professional program listings, enrollment, submissions, reviews, workshop registration, attendance and feedback.
+- **Recruitment:** applications, timelines, interviews/rescheduling, calendar exports, written offers, responses and two-party joining confirmation.
+- **Internships:** accepted arrangements, industry/faculty supervision, milestones, progress logs, private report versions and reviewed completion records.
+- **Collaboration:** research proposals, project milestones, consent-based teams, private attachments, innovation challenges and mentorship journals.
+- **Institution intelligence:** authorized cohort dashboards, roster invitations, skill-demand views, monthly outcome charts and scoped exports.
+- **Trust & notifications:** organization verification with explicitly provisioned reviewers, private paginated inboxes and an optional opt-in email delivery worker.
+
+Availability depends on database migrations and external-service configuration. An implemented screen does not mean every integration is deployed.
+
+## Technology stack
+
+| Layer | Technologies |
+| :-- | :-- |
+| Application | Next.js 15 App Router, React 19, TypeScript and JavaScript |
+| Interface | Tailwind CSS, Base UI, shadcn-style components, Framer Motion, Lucide |
+| Data & validation | SWR, Zod, React Hook Form |
+| Backend | Supabase PostgreSQL, Auth, row-level security, SQL functions, private Storage |
+| AI | Google Gemini API / Google Generative AI SDK |
+| Analytics | Recharts and deterministic calculations over authorized records |
+| Email | Resend-backed account/email workflows and optional queued notification delivery |
+| Verification | Node.js test runner, PGlite PostgreSQL fixtures, TypeScript and Next.js builds |
+
+## Run locally
+
+Use **Node.js 22 or 24** and npm. You need your own Supabase project; no private environment file or database backup is included.
+
+```sh
+git clone https://github.com/Rajj-c/SIH_26.git
+cd SIH_26
+npm ci
+cp .env.example .env.local
+```
+
+### 1. Configure the environment
+
+Use `.env.example` as the reference:
+
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`: browser/server access under database policies.
+- `SUPABASE_SERVICE_ROLE_KEY`: privileged server/provisioning workflows only. Never expose it in a public variable or client bundle.
+- `NEXT_PUBLIC_APP_URL`: exact application origin for callbacks and account flows.
+- `GEMINI_API_KEY` and `GEMINI_MODEL`: optional AI features.
+- `RESEND_API_KEY` and `RESEND_FROM_EMAIL`: configured email workflows; use a verified sender.
+- `NOTIFICATION_JOB_SECRET`: optional worker authorization. Configure an external scheduler separately.
+
+Keep guest-access flags disabled for a normal private deployment. See the evaluation section before enabling them.
+
+### 2. Prepare Supabase
+
+1. Review and back up an existing project before schema changes.
+2. On a **new empty project only**, run [`empty-evaluator-project.sql`](supabase/bootstrap/empty-evaluator-project.sql) to create the base `profiles` table expected by the migrations. Despite its name, this bootstrap contains no demo data.
+3. Apply [`supabase/migrations`](supabase/migrations) in filename order, once each. Do not blindly rerun already-applied migrations.
+4. Configure Auth callback URLs: `http://localhost:3000/auth/callback` locally and your exact HTTPS deployment callback. Configure Google OAuth only if required.
+5. Provision organization/question reviewers only through the documented trusted-administrator process—not ordinary signup or guest accounts.
+
+The app's API keys do not apply SQL migrations. Use Supabase SQL Editor or authorized database-management tooling.
+
+### 3. Start the app
+
+```sh
+npm run dev
+```
+
+Open **http://localhost:3000**. For a production build:
+
+```sh
+npm run build
+npm run start
+```
+
+No hosted URL is asserted here. Deploying the code does not automatically apply database migrations or configure external services.
+
+## Evaluate the prototype
+
+The team explicitly authorized **public shared evaluation accounts in its current prototype database**. Their intentionally public credentials appear under separate role sections on the configured login page. Credential definitions are source-controlled by design; never reuse these passwords for real accounts.
+
+> **Important:** Guests have normal role permissions. They are not read-only or isolated from the current platform. Visitors can alter shared demo activity. Do not upload personal documents, use these accounts for real applications, or mistake demonstration records for real partnerships or outcomes.
+
+The labelled guest journey demonstrates:
+
+1. **Industry** publishes an evaluation internship and structured workshop.
+2. **Student** adds self-declared sample skills, applies, accepts the internship and enrolls in the workshop.
+3. **Industry** gives feedback on a simulated progress milestone.
+4. **Academician** accepts faculty supervision assigned by the guest institution.
+5. **Institution** sees approved guest membership and saved connected activity.
+
+No verified credentials, assessment scores or completed placements are fabricated. Fictional demonstration records are persisted in Supabase and labelled accordingly. Normal empty accounts still show honest empty states.
+
+Provisioning scripts are **explicitly opt-in**, create persistent records and never run on install, test or app startup. Read [evaluator setup](docs/evaluator-access.md) and the [shared journey guide](docs/shared-evaluation-journey.md) first. Private manifests, session tokens, recordings and `.env.local` are excluded from Git.
+
+## Access, privacy & responsible AI
+
+- Ordinary requests use authenticated sessions and row-level security.
+- Assigned roles cannot be changed through profile editing; reviewer access is separately provisioned.
+- Applications and approved memberships grant specific access to evidence. Understand that consent boundary before using real records.
+- Private files require authorized access; short-lived signed links cannot revoke downloaded copies.
+- Applicants do not self-verify credentials or submit authoritative scores.
+- Client caches clear on account changes, including paginated inboxes and newer workspaces.
+- Gemini allowances are per-account controls, **not a global spending cap**. Configure provider budgets before public evaluation.
+- Email queuing is not proof of inbox delivery. Calendar `.ics` exports are not Google/Microsoft synchronization.
 
 ## Verification
 
 ```sh
 npm test
 npm run typecheck
-npm run lint
 npm run build
 ```
 
-Database tests run the migration inside a disposable local PGlite database and exercise RLS, private files, role restrictions, applications, institution consent, assessment transactions, and rate limits. Synthetic identities exist only inside these isolated tests; tests never write to your connected Supabase project.
+The suite currently contains **102 tests** covering policies, workflow transitions, assessment integrity, private documents, notifications, role routing, analytics and cache cleanup. Database tests use disposable local PGlite instances; they do not seed the connected Supabase project. External-provider tests use controlled doubles, not paid AI calls or real delivery.
 
-After applying the migration, verify the real journey with accounts you control: save a profile and credentials, publish an opportunity, apply from an eligible account, review the application, approve institution membership, and submit an assessment. Check persistence after sign-out/sign-in and from a second device.
+Tests are not proof of production scalability or a fully configured deployment. See [workflow validation](docs/workflow-validation.md) and [browser verification notes](docs/shared-evaluation-journey.md).
 
-## Integrations and remaining product work
+### Known deployment check
 
-Resend is used for account emails, Gemini for AI practice questions, and Supabase for Auth, database, and files. External learning resources are links only; institutional ERP/LMS sync, certification-provider verification, institution/employer identity vetting, live chat, practical-task/human-review workflows, and independent credential verification are not implemented integrations. A `verified_at` field is not a verification service.
+The latest recorded live check found `collaboration_members` and `collaboration_files` unavailable in the Supabase API schema cache. Faculty supervision worked, but combined faculty metrics stayed hidden. Verify migration [`202609220019_collaboration_teams.sql`](supabase/migrations/202609220019_collaboration_teams.sql). If the tables already exist, investigate schema-cache refresh instead of rerunning it. This README does not claim that live blocker is resolved.
 
-Before a public launch, add identity vetting, abuse protection/CAPTCHA, document malware scanning, retention/deletion processes, audit logging, monitoring, backups, load testing, and accessibility testing. Email rate limits currently apply per address, not globally. The workspace currently reads authorized records in batches; a large deployment needs server-filtered queries and paginated UI.
+## Project map
+
+```text
+app/                  Routes, four portals and server endpoints
+components/           Shared UI, dashboard shells and workflow workspaces
+lib/                  Data access, validation, AI prompts and domain logic
+supabase/migrations/  Versioned schema, policies and workflow functions
+supabase/bootstrap/   Base schema for a new empty project
+tests/                Database, route and domain regression tests
+scripts/              Explicit provisioning and demonstration utilities
+docs/                 Setup, workflow contracts and verification notes
+```
+
+## Go deeper
+
+- **Skills & AI:** [Assessment studio](docs/ai-assessment-studio.md) · [Question bank](docs/question-bank.md) · [AI learning planner](docs/ai-learning-planner.md)
+- **Learning:** [Programs](docs/learning-programs.md) · [Sessions](docs/learning-sessions.md) · [Internship reports](docs/internship-reports.md)
+- **Outcomes:** [Recruitment](docs/recruitment-workflow.md) · [Collaboration](docs/collaboration-workspaces.md) · [Outcome charts](docs/outcome-activity-charts.md)
+- **Operations:** [Credential reviews](docs/credential-reviews.md) · [Notifications](docs/notification-history.md) · [Rollout and remaining work](docs/remaining-implementation-rollout.md)
+
+## Before a wider launch
+
+Organization-wide staff delegation, external LMS/certification/ERP synchronization, calendar OAuth, richer historical analytics and production operations remain separate work. Monitoring, backup-restore rehearsal, malware scanning, load testing, bounce handling and broader accessibility validation are needed before claiming production readiness.
+
+---
+
+<div align="center">
+
+**Built by Tech Pioneers for SIH 2026**<br>
+*Origin Point connects what students learn with what industry needs.*
+
+</div>

@@ -9,17 +9,21 @@ import {
   DataState,
   Tag,
   Metric,
+  Empty,
 } from "@/components/platform/primitives";
 import { usePlatformData } from "@/lib/platform-store";
 import { assessmentTopics, assessmentLevels } from "@/lib/assessment-catalog";
-import { coursesCatalog } from "@/lib/courses-data";
+import { useLearningTracks } from "@/lib/use-learning-tracks";
+import { PublisherVerification } from "@/components/platform/publisher-verification";
 export default function Page() {
   const state = usePlatformData();
   const data = state.data;
+  const tracks = useLearningTracks();
+  const courses = tracks.data?.filter((c) => c.status === "Published") ?? [];
   const [tab, setTab] = useState("assessments");
   const progress =
     data?.progress.filter((p) => p.user_id === data.profile.id) ?? [];
-  const complete = Object.values(coursesCatalog).filter((c) =>
+  const complete = courses.filter((c) =>
     c.modules.every((m) =>
       m.subTopics.every((s) =>
         progress.some(
@@ -40,6 +44,7 @@ export default function Page() {
           description="Explore learning tracks and practice assessments. Your results and completed subtopics are saved to your account."
         />
         <DataState {...state} retry={state.refresh} />
+        <DataState {...tracks} retry={tracks.refresh} />
         {data && !state.error && (
           <>
             <div className="grid gap-4 sm:grid-cols-3">
@@ -51,7 +56,10 @@ export default function Page() {
                 }
               />
               <Metric label="Practised subtopics" value={progress.length} />
-              <Metric label="Completed learning tracks" value={complete} />
+              <Metric
+                label="Published tracks fully practised"
+                value={tracks.data && !tracks.error ? complete : "—"}
+              />
             </div>
             <div className="flex w-fit gap-1 rounded-2xl border border-border bg-muted/50 p-1.5">
               {["assessments", "courses"].map((t) => (
@@ -101,7 +109,13 @@ export default function Page() {
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {Object.values(coursesCatalog).map((c) => {
+                {!tracks.loading && !tracks.error && !courses.length && (
+                  <Empty
+                    title="No published learning tracks yet"
+                    description="Publisher-authored tracks appear here after publication. Explore Learning Programs for available industry training."
+                  />
+                )}
+                {courses.map((c) => {
                   const total = c.modules.reduce(
                     (sum, m) => sum + m.subTopics.length,
                     0,
@@ -129,6 +143,11 @@ export default function Page() {
                           <p className="mt-3 text-sm leading-6 text-muted-foreground">
                             {c.description}
                           </p>
+                          <p className="mt-3 text-xs text-muted-foreground">
+                            Published by {c.publisher_name} · Learning material,
+                            not an accredited certification
+                          </p>
+                          <PublisherVerification ownerId={c.owner_id} />
                           <p className="mt-5 text-xs text-muted-foreground">
                             {done} / {total} subtopics practised
                           </p>

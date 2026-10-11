@@ -55,6 +55,14 @@ export function RecordManager({ data }: { data: PlatformData }) {
   return (
     <section className="space-y-5">
       {data.profile.role === "student" && <SkillPassport data={data} />}
+      {data.profile.role === "student" && (
+        <Link
+          className="glass-row block rounded-2xl p-4 text-sm font-semibold role-text"
+          href="/student/credential-reviews"
+        >
+          Request institution review of a certificate or view decisions ↗
+        </Link>
+      )}
       {["student", "academician"].includes(data.profile.role) && (
         <ProgramCompletions userId={data.profile.id} role={data.profile.role} />
       )}

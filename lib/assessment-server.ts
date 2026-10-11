@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { coursesCatalog } from "@/lib/courses-data";
+import { getPublishedTrack } from "@/lib/learning-track-server";
 import { assessmentTopics, assessmentLevels } from "@/lib/assessment-catalog";
 
 const questionSchema = z
@@ -45,17 +45,36 @@ export async function startAssessment(request: Request, courseMode = false) {
       { status: 400 },
     );
   }
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return NextResponse.json({error:'Invalid assessment request.'},{status:400});
+  if (!body || typeof body !== "object" || Array.isArray(body))
+    return NextResponse.json(
+      { error: "Invalid assessment request." },
+      { status: 400 },
+    );
   let topicId = body.topicId;
-  let topicTitle = Object.hasOwn(assessmentTopics,topicId) ? assessmentTopics[topicId] : undefined;
+  let topicTitle = Object.hasOwn(assessmentTopics, topicId)
+    ? assessmentTopics[topicId]
+    : undefined;
   let levelId = body.levelId;
-  let levelTitle = Object.hasOwn(assessmentLevels,levelId) ? assessmentLevels[levelId] : undefined;
+  let levelTitle = Object.hasOwn(assessmentLevels, levelId)
+    ? assessmentLevels[levelId]
+    : undefined;
   let context = "";
   let courseId: null | string = null;
   let moduleId: null | string = null;
   let subtopicId: null | string = null;
   if (courseMode) {
-    const course = Object.hasOwn(coursesCatalog,body.courseId) ? coursesCatalog[body.courseId] : undefined;
+    let course;
+    try {
+      course =
+        typeof body.courseId === "string"
+          ? await getPublishedTrack(body.courseId)
+          : null;
+    } catch {
+      return NextResponse.json(
+        { error: "Learning catalog unavailable. Please try again." },
+        { status: 503 },
+      );
+    }
     const courseModule = course?.modules.find((m) => m.id === body.moduleId);
     const subtopic = courseModule?.subTopics.find(
       (s) => s.id === body.subtopicId,
@@ -86,6 +105,22 @@ export async function startAssessment(request: Request, courseMode = false) {
           "Assessment generation is not configured. Contact the project administrator.",
       },
       { status: 503 },
+    );
+  const { data: retryAfter, error: limitError } =
+    await db.rpc("reserve_ai_request");
+  if (limitError || !Number.isInteger(retryAfter) || retryAfter < 0)
+    return NextResponse.json(
+      {
+        error: "AI request limits unavailable. Apply migration 018 and retry.",
+      },
+      { status: 503 },
+    );
+  if (retryAfter > 0)
+    return NextResponse.json(
+      {
+        error: `AI request allowance reached. Retry in ${retryAfter} seconds.`,
+      },
+      { status: 429 },
     );
   const admin = createAdminClient();
   const { count, error: countError } = await admin
