@@ -47,8 +47,10 @@ const blankQuestion = (): IndustryQuestion => ({
   category: "Technical",
 });
 export function IndustryAssessmentsWorkspace({
+  embedded = false,
   author = false,
 }: {
+  embedded?: boolean;
   author?: boolean;
 }) {
   const platform = usePlatformData();
@@ -85,6 +87,7 @@ export function IndustryAssessmentsWorkspace({
   }
   return (
     <DashboardShell
+      embedded={embedded}
       role={author ? "industry" : "student"}
       title={author ? "Assessment studio" : "Industry assessments"}
     >

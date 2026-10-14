@@ -1,4 +1,4 @@
-import { IndustryAssessmentsWorkspace } from "@/components/platform/industry-assessments";
+import { redirect } from "next/navigation";
 export default function Page() {
-  return <IndustryAssessmentsWorkspace />;
+  redirect("/student/assessments?tab=industry");
 }

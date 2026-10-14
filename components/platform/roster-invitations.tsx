@@ -15,7 +15,7 @@ import {
   useAction,
 } from "./primitives";
 const KEY = "/api/roster-invitations";
-export function RosterInvitations({ role }: { role: Role }) {
+export function RosterInvitations({ role, embedded = false }: { role: Role; embedded?: boolean }) {
   const s = useSWR(
     KEY,
     async () => {
@@ -42,7 +42,7 @@ export function RosterInvitations({ role }: { role: Role }) {
       duplicates: number;
     } | null>(null);
   return (
-    <DashboardShell role={role} title="Roster invitations">
+    <DashboardShell embedded={embedded} role={role} title="Roster invitations">
       <div className="space-y-6">
         <PageHeading
           eyebrow="Institution connections"

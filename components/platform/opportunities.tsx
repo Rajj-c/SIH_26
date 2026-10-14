@@ -76,11 +76,13 @@ const blankQuestion = (): IndustryQuestion => ({
 });
 
 export function OpportunityWorkspace({
+  embedded = false,
   role = "student",
   types,
   compose = false,
   title = "Opportunities",
 }: {
+  embedded?: boolean;
   role?: Role;
   types?: OpportunityType[];
   compose?: boolean;
@@ -204,7 +206,7 @@ export function OpportunityWorkspace({
     }
   }
   return (
-    <DashboardShell role={role} title={title}>
+    <DashboardShell embedded={embedded} role={role} title={title}>
       <div className="space-y-6">
         <PageHeading
           eyebrow={
@@ -728,7 +730,7 @@ export function OpportunityWorkspace({
                 </Button>
               )}
             </div>
-            <div className="grid items-start gap-4 lg:grid-cols-2">
+            <div className="grid items-stretch gap-6 lg:grid-cols-2">
               {visible.map((o) => {
                 const score = getMatchScore(o.skills, skills);
                 const applied = data.applications.some(
@@ -748,9 +750,9 @@ export function OpportunityWorkspace({
                 return (
                   <Card
                     key={o.id}
-                    className="overflow-hidden transition hover:shadow-md"
+                    className="h-full overflow-hidden transition hover:shadow-md"
                   >
-                    <CardContent className="p-6">
+                    <CardContent className="flex h-full flex-col p-6">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 gap-3">
                           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl role-bg-soft role-text">
@@ -863,7 +865,8 @@ export function OpportunityWorkspace({
                           )}
                         </div>
                       )}
-                      <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
+                      <div className="flex-1" />
+                      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
                         <button
                           aria-expanded={expanded === o.id}
                           onClick={() =>
@@ -875,7 +878,7 @@ export function OpportunityWorkspace({
                             ? "Hide details"
                             : "Read the brief"}
                         </button>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap items-center gap-3">
                           {compose ? (
                             <Button
                               disabled={action.busy || !open}
@@ -921,7 +924,7 @@ export function OpportunityWorkspace({
                                 (p) => p.id === o.id,
                               ) ? (
                                 <Link
-                                  className="text-sm font-semibold role-text"
+                                  className="inline-flex min-h-9 items-center text-xs font-semibold role-text"
                                   href={`/${role}/programs?program=${o.id}`}
                                 >
                                   View program & enroll →

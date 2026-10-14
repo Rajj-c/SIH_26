@@ -2,12 +2,12 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle({ className }) {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -23,10 +23,9 @@ export function ThemeToggle({ className }) {
   const modes = [
     { value: "light", icon: Sun, label: "Light mode" },
     { value: "dark", icon: Moon, label: "Dark mode" },
-    { value: "system", icon: Monitor, label: "System default" },
   ];
 
-  const currentIndex = modes.findIndex((m) => m.value === theme);
+  const currentIndex = modes.findIndex((m) => m.value === resolvedTheme);
   const nextMode = modes[(currentIndex + 1) % modes.length];
   const CurrentIcon = modes[currentIndex]?.icon || Sun;
 

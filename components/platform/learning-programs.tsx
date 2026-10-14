@@ -33,7 +33,7 @@ import {
   Metric,
 } from "./primitives";
 
-export function LearningPrograms({ role }: { role: Role }) {
+export function LearningPrograms({ role, embedded = false }: { role: Role; embedded?: boolean }) {
   const platform = usePlatformData();
   const state = useLearningPrograms();
   const [query, setQuery] = useState("");
@@ -66,7 +66,7 @@ export function LearningPrograms({ role }: { role: Role }) {
   const evidence =
     platform.data?.evidence.filter((e) => e.user_id === me?.id) ?? [];
   return (
-    <DashboardShell role={role} title="Learning programs">
+    <DashboardShell embedded={embedded} role={role} title="Learning programs">
       <div className="space-y-7">
         <PageHeading
           eyebrow="Industry learning network"

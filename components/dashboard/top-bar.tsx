@@ -35,17 +35,14 @@ export function TopBar({
   return (
     <header
       className={
-        "dashboard-top-bar sticky top-0 z-40 flex min-h-16 items-center justify-between gap-3 border-b border-border/70 bg-background/90 px-4 backdrop-blur-xl md:px-6 " +
+        "dashboard-top-bar relative z-40 flex min-h-16 items-center justify-between gap-3 border-b border-border/70 bg-background px-4 md:px-6 " +
         className
       }
     >
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold">{title || "Workspace"}</p>
-        <p className="mt-0.5 text-[11px] capitalize text-muted-foreground">
-          {role} workspace
-        </p>
+        <p className="truncate text-lg font-semibold tracking-tight md:text-xl">{title || "Dashboard"}</p>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-3">
         <NotificationBell role={role} />
         <ThemeToggle className="" />
         <Link
@@ -53,12 +50,12 @@ export function TopBar({
           className="flex items-center gap-2 rounded-full border border-border py-1.5 pl-1.5 pr-3 hover:bg-muted"
         >
           <span className="flex h-7 w-7 items-center justify-center rounded-full role-gradient text-xs font-bold text-white">
-            {data?.profile.full_name?.charAt(0).toUpperCase() || (
+            {data?.profile?.full_name?.charAt(0).toUpperCase() || (
               <UserRound className="h-3.5 w-3.5" />
             )}
           </span>
           <span className="hidden max-w-40 truncate text-xs font-medium sm:block">
-            {data?.profile.full_name || "Your profile"}
+            {data?.profile?.full_name || "Your profile"}
           </span>
         </Link>
         <button

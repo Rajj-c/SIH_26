@@ -18,7 +18,7 @@ import {
   Tag,
   useAction,
 } from "./primitives";
-export function Initiatives({ role }: { role: Role }) {
+export function Initiatives({ role, embedded = false }: { role: Role; embedded?: boolean }) {
   const state = useInitiatives(),
     platform = usePlatformData(),
     action = useAction();
@@ -35,7 +35,7 @@ export function Initiatives({ role }: { role: Role }) {
           : true,
     ) ?? [];
   return (
-    <DashboardShell role={role} title="Challenges & mentorship">
+    <DashboardShell embedded={embedded} role={role} title="Challenges & mentorship">
       <div className="space-y-6">
         <PageHeading
           eyebrow="Build with purpose"

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { OAUTH_CONTEXT_COOKIE, readOAuthContext, roleReturnPath } from "@/lib/oauth-redirect.mjs";
 
 const VALID_ROLES = ["student", "industry", "academician", "institution"];
 
@@ -8,9 +10,12 @@ export async function GET(request) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type"); // "email" | "recovery" | "signup" | etc.
-  const nextParam = searchParams.get("next");
-  const mode = searchParams.get("mode") || "login";
-  const queryRole = searchParams.get("role");
+  const cookieStore = await cookies();
+  const context = readOAuthContext(code ? cookieStore.get(OAUTH_CONTEXT_COOKIE)?.value : undefined);
+  cookieStore.delete(OAUTH_CONTEXT_COOKIE);
+  const nextParam = searchParams.get("next") || context.next;
+  const mode = searchParams.get("mode") || context.mode;
+  const queryRole = searchParams.get("role") || context.role;
 
   const supabase = await createClient();
 
@@ -70,7 +75,7 @@ export async function GET(request) {
 
       const fallbackRole = fallbackProfile?.role;
       if (fallbackRole && VALID_ROLES.includes(fallbackRole)) {
-        return NextResponse.redirect(`${origin}/${fallbackRole}`);
+        return NextResponse.redirect(`${origin}${roleReturnPath(nextParam, fallbackRole)}`);
       }
       return NextResponse.redirect(`${origin}/select-role`);
     }
@@ -132,9 +137,5 @@ async function handleAuthSuccess({ supabase, user, origin, mode, queryRole, next
 
   if(profileError) return NextResponse.redirect(`${origin}/select-role?error=Profile%20could%20not%20be%20saved`);
 
-  if (nextParam && (nextParam === `/${assignedRole}` || nextParam.startsWith(`/${assignedRole}/`))) {
-    return NextResponse.redirect(`${origin}${nextParam}`);
-  }
-
-  return NextResponse.redirect(`${origin}/${assignedRole}`);
+  return NextResponse.redirect(`${origin}${roleReturnPath(nextParam, assignedRole)}`);
 }

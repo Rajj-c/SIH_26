@@ -448,7 +448,7 @@ export function RecruitmentPanel({
   );
 }
 
-export function RecruitmentWorkspace({ role }: { role: Role }) {
+export function RecruitmentWorkspace({ role, embedded = false }: { role: Role; embedded?: boolean }) {
   const platform = usePlatformData();
   const state = useRecruitment();
   const data = platform.data;
@@ -459,7 +459,7 @@ export function RecruitmentWorkspace({ role }: { role: Role }) {
       ),
     ) ?? [];
   return (
-    <DashboardShell role={role} title="Recruitment tracker">
+    <DashboardShell embedded={embedded} role={role} title="Recruitment tracker">
       <div className="space-y-6">
         <PageHeading
           eyebrow="From conversation to joining"
@@ -509,8 +509,8 @@ export function RecruitmentWorkspace({ role }: { role: Role }) {
                     <RecruitmentPanel
                       application={a}
                       isJob={o?.type === "Job"}
-                      owner={o?.ownerId === data.profile.id}
-                      applicant={a.applicantId === data.profile.id}
+                      owner={o?.ownerId === data.profile?.id}
+                      applicant={a.applicantId === data.profile?.id}
                     />
                   </CardContent>
                 </Card>

@@ -2,6 +2,7 @@ import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import "./glass-system.css";
+import "./student-experience.css";
 import { AuthCacheBoundary } from "@/components/platform/auth-cache-boundary";
 
 const geistSans = localFont({
@@ -30,9 +31,8 @@ export const metadata = {
     "placement analytics",
   ],
   icons: {
-    icon: [{ url: "/logo.png", type: "image/png" }],
-    apple: [{ url: "/logo.png", type: "image/png" }],
-    shortcut: "/logo.png",
+    icon: [{ url: "/origin-infinity.svg", type: "image/svg+xml" }],
+    shortcut: "/origin-infinity.svg",
   },
 };
 

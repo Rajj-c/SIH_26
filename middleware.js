@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { normalizeSupabaseUrl } from "@/lib/supabase/project-url.mjs";
 
 const VALID_ROLES = ["student", "industry", "academician", "institution"];
 
@@ -25,7 +26,7 @@ export async function middleware(request) {
 
   // Build the Supabase client that reads/writes cookies via the middleware
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL),
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
@@ -85,7 +86,7 @@ export async function middleware(request) {
 
   if (isProtected && !isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("next", pathname + request.nextUrl.search);
     return redirect(loginUrl);
   }
 

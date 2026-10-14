@@ -3,18 +3,18 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu, Settings, X } from "lucide-react";
-import { roleNavigation } from "./sidebar";
+import { roleNavigation, isNavigationItemActive } from "./sidebar";
 import { cn } from "@/lib/utils";
 export function MobileBottomNav({ role = "student" }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const items = [
     ...(roleNavigation[role] || roleNavigation.student),
-    {
+    ...(role === "student" ? [] : [{
       label: "Profile & credentials",
       href: `/${role}/profile`,
       icon: Settings,
-    },
+    }]),
   ];
   useEffect(() => setOpen(false), [pathname]);
   return (
@@ -42,10 +42,10 @@ export function MobileBottomNav({ role = "student" }) {
               <Link
                 key={item.href}
                 href={item.href}
-                aria-current={pathname === item.href ? "page" : undefined}
+                aria-current={isNavigationItemActive(item, pathname, role) ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-2 rounded-xl p-3 text-xs",
-                  pathname === item.href
+                  isNavigationItemActive(item, pathname, role)
                     ? "role-bg-soft role-text"
                     : "bg-muted/40 text-muted-foreground",
                 )}
@@ -62,10 +62,10 @@ export function MobileBottomNav({ role = "student" }) {
           <Link
             href={item.href}
             key={item.href}
-            aria-current={pathname === item.href ? "page" : undefined}
+            aria-current={isNavigationItemActive(item, pathname, role) ? "page" : undefined}
             className={cn(
               "flex flex-1 flex-col items-center gap-1 py-2 text-[10px]",
-              pathname === item.href ? "role-text" : "text-muted-foreground",
+              isNavigationItemActive(item, pathname, role) ? "role-text" : "text-muted-foreground",
             )}
           >
             <item.icon className="h-5 w-5" />

@@ -378,7 +378,7 @@ function MilestoneReview({ milestone }: { milestone: Milestone }) {
   );
 }
 
-export function InternshipWorkspace({ role }: { role: Role }) {
+export function InternshipWorkspace({ role, embedded = false }: { role: Role; embedded?: boolean }) {
   const state = usePlatformData();
   const data = state.data;
   const applications =
@@ -397,7 +397,7 @@ export function InternshipWorkspace({ role }: { role: Role }) {
         ),
     ) ?? [];
   return (
-    <DashboardShell role={role} title="Internship tracking">
+    <DashboardShell embedded={embedded} role={role} title="Internship tracking">
       <div className="space-y-6">
         <PageHeading
           eyebrow="From selection to delivery"
@@ -425,8 +425,8 @@ export function InternshipWorkspace({ role }: { role: Role }) {
                   <CardContent>
                     <InternshipPanel
                       application={a}
-                      canManage={opportunity?.ownerId === data.profile.id}
-                      canSubmit={a.applicantId === data.profile.id}
+                      canManage={opportunity?.ownerId === data.profile?.id}
+                      canSubmit={a.applicantId === data.profile?.id}
                     />
                     <ApplicationTimeline applicationId={a.id} />
                   </CardContent>

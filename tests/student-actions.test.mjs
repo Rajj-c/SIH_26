@@ -25,6 +25,28 @@ function fixture() {
     goals: [],
   };
 }
+test("incomplete source data never crashes or invents zero progress", () => {
+  for (const [source, key] of [
+    ["learning", "enrollments"],
+    ["learning", "programs"],
+    ["tracking", "reports"],
+    ["recruitment", "offers"],
+    ["platform", "applications"],
+  ]) {
+    const data = fixture();
+    delete data[source][key];
+    assert.equal(buildStudentActions(data), null);
+  }
+  const cachedEvent = fixture();
+  cachedEvent.learning = { type: "click" };
+  assert.equal(buildStudentActions(cachedEvent), null);
+});
+
+test("valid empty learning collections still produce a dashboard", () => {
+  const result = buildStudentActions(fixture());
+  assert.equal(result.summary.learning, 0);
+  assert.equal(result.summary.learningCompleted, 0);
+});
 test("student actions scope records and prioritize live offers over upcoming interviews", () => {
   const f = fixture();
   f.recruitment.offers = [

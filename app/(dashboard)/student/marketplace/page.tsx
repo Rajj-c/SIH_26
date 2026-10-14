@@ -1,4 +1,4 @@
-import { OpportunityWorkspace } from "@/components/platform/opportunities";
+import { redirect } from "next/navigation";
 export default function MarketplacePage() {
-  return <OpportunityWorkspace role="student" title="Marketplace" />;
+  redirect("/student/career?tab=marketplace");
 }

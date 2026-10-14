@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import PortalJourney from "@/components/landing/portal-journey";
+import LandingFooter from "@/components/landing/landing-footer";
+import { OriginWordmark } from "@/components/shared/origin-logo";
 import { GraduationCap, Factory, Presentation, School } from "lucide-react";
 
 const NAV_LINKS = [
@@ -13,6 +16,7 @@ const NAV_LINKS = [
 
 export default function LandingPage() {
   return (
+    <main>
     <div className="landing-hero relative min-h-screen overflow-hidden">
 
       {/* ── Background Video ── */}
@@ -30,17 +34,11 @@ export default function LandingPage() {
 
       {/* ══════════════════════ NAVBAR ══════════════════════ */}
       <nav className="relative z-10 w-full">
-        <div className="flex flex-row items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+        <div className="flex flex-row items-center justify-between gap-4 px-4 sm:px-8 py-6 max-w-7xl mx-auto">
 
           {/* Logo */}
-          <Link href="/" className="flex items-baseline gap-0 select-none">
-            <span
-              className="text-3xl tracking-tight text-white leading-none"
-              style={{ fontFamily: "'Instrument Serif', serif" }}
-            >
-              Origin Point
-            </span>
-            <sup className="text-xs text-white/60 ml-0.5">®</sup>
+          <Link href="/" className="flex items-center text-white">
+            <OriginWordmark className="text-[13px] sm:text-lg" />
           </Link>
 
           {/* Nav Links — hidden on mobile */}
@@ -78,9 +76,9 @@ export default function LandingPage() {
         <div className="animate-fade-rise flex flex-wrap justify-center gap-3 mb-10">
           {[
             { role: "Student",     Icon: GraduationCap, desc: "Assessments · Skill mapping · Portfolio"   },
-            { role: "Industry",    Icon: Factory,       desc: "Post roles · Source talent · Mentorship"   },
             { role: "Academician", Icon: Presentation,  desc: "FDPs · Research · Student tracking"        },
             { role: "Institution", Icon: School,        desc: "Analytics · Placement · Accreditation"     },
+            { role: "Industry",    Icon: Factory,       desc: "Post roles · Source talent · Mentorship"   },
           ].map(({ role, Icon, desc }) => (
             <div
               key={role}
@@ -150,8 +148,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── spacer so CTA isn't flush to viewport bottom ── */}
-      <div id="explore" className="relative z-10 pb-16" />
+      <div className="relative z-10 pb-16" />
 
     </div>
+    <PortalJourney />
+    <LandingFooter />
+    </main>
   );
 }

@@ -27,6 +27,7 @@ import {
   UserCheck,
   Building,
   Settings,
+  School,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -34,6 +35,19 @@ interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  activePaths?: string[];
+}
+
+export function isNavigationItemActive(
+  item: NavItem,
+  pathname: string,
+  role: string,
+) {
+  return [item.href, ...(item.activePaths ?? [])].some(
+    (path) =>
+      pathname === path ||
+      (path !== `/${role}` && pathname.startsWith(`${path}/`)),
+  );
 }
 
 const roleIcons: Record<string, LucideIcon> = {
@@ -52,58 +66,31 @@ const roleLabels: Record<string, string> = {
 
 export const roleNavigation: Record<string, NavItem[]> = {
   student: [
-    {
-      label: "Institution Invitations",
-      href: "/student/roster",
-      icon: Landmark,
-    },
-    {
-      label: "Challenges & Mentorship",
-      href: "/student/initiatives",
-      icon: Target,
-    },
-    { label: "Project Teams", href: "/student/collaborations", icon: Users },
-    {
-      label: "Sessions & Events",
-      href: "/student/sessions",
-      icon: CalendarDays,
-    },
     { label: "Dashboard", href: "/student", icon: LayoutDashboard },
+    { label: "Project Teams", href: "/student/collaborations", icon: Users },
+    { label: "Career Hub", href: "/student/career", icon: Briefcase },
     {
-      label: "Recruitment Tracker",
-      href: "/student/recruitment-tracker",
-      icon: CalendarDays,
-    },
-    { label: "Learning Programs", href: "/student/programs", icon: BookMarked },
-    {
-      label: "Skill Assessment",
-      href: "/student/assessment",
+      label: "Assessment",
+      href: "/student/assessments",
       icon: ClipboardCheck,
+      activePaths: [
+        "/student/assessment",
+        "/student/industry-assessments",
+        "/student/report",
+      ],
     },
-    {
-      label: "Industry Assessments",
-      href: "/student/industry-assessments",
-      icon: ClipboardCheck,
-    },
+    { label: "Campus & Community", href: "/student/community", icon: School,
+      activePaths: ["/student/roster", "/student/initiatives", "/student/sessions", "/student/programs"] },
     { label: "Career Readiness", href: "/student/readiness", icon: Target },
     {
       label: "Learning Plan",
       href: "/student/learning-plan",
       icon: BookMarked,
     },
-    { label: "Skill Report", href: "/student/report", icon: BarChart3 },
-    { label: "Portfolio", href: "/student/portfolio", icon: FileText },
     {
       label: "Credential Reviews",
       href: "/student/credential-reviews",
       icon: FileText,
-    },
-    { label: "Marketplace", href: "/student/marketplace", icon: Briefcase },
-    { label: "Applications", href: "/student/applications", icon: Target },
-    {
-      label: "Internship Tracking",
-      href: "/student/internships",
-      icon: FolderKanban,
     },
   ],
   industry: [
@@ -301,23 +288,31 @@ export const roleNavigation: Record<string, NavItem[]> = {
 
 interface SidebarProps {
   role?: string;
+  collapsed?: boolean;
 }
 
-export function Sidebar({ role = "student" }: SidebarProps) {
+export function Sidebar({ role = "student", collapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const navItems = [
     ...(roleNavigation[role] ?? roleNavigation.student),
-    {
-      label: "Profile & credentials",
-      href: `/${role}/profile`,
-      icon: Settings,
-    },
+    ...(role === "student"
+      ? []
+      : [
+          {
+            label: "Profile & credentials",
+            href: `/${role}/profile`,
+            icon: Settings,
+          },
+        ]),
   ];
   const RoleIcon = roleIcons[role] ?? GraduationCap;
   const roleLabel = roleLabels[role] ?? "Student";
 
   return (
     <aside
+      id="desktop-workspace-sidebar"
+      inert={collapsed}
+      aria-hidden={collapsed || undefined}
       className={cn(
         "dashboard-sidebar fixed bottom-0 left-0 top-0 z-50 w-64 flex-col border-r border-border bg-card",
       )}
@@ -327,7 +322,7 @@ export function Sidebar({ role = "student" }: SidebarProps) {
         <div className="overflow-hidden">
           <Link href="/" className="block">
             <OriginWordmark
-              className="text-sm font-bold tracking-tight whitespace-nowrap"
+              className="text-[15px] xl:text-base font-bold tracking-tight whitespace-nowrap"
               symbolClassName=""
             />
           </Link>
@@ -351,9 +346,7 @@ export function Sidebar({ role = "student" }: SidebarProps) {
         </p>
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive =
-            pathname === item.href ||
-            (item.href !== `/${role}` && pathname.startsWith(item.href));
+          const isActive = isNavigationItemActive(item, pathname, role);
 
           return (
             <Link
@@ -362,23 +355,14 @@ export function Sidebar({ role = "student" }: SidebarProps) {
               aria-current={isActive ? "page" : undefined}
             >
               <motion.div
-                whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
                 className={cn(
                   "group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors duration-150",
                   isActive
-                    ? "role-bg-soft role-text"
+                    ? "role-text font-semibold"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted",
                 )}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId="sidebar-active"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                    style={{ background: "hsl(var(--role-primary))" }}
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
-                )}
                 <Icon
                   className={cn(
                     "h-4 w-4 flex-shrink-0 transition-colors",

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
-export async function createTestDatabase() {
+export async function createTestDatabase({ stopAfterLearningSessions = false } = {}) {
   const db = new PGlite();
   try {
     // Disposable local Postgres only. No test records are sent to a connected project.
@@ -181,6 +181,8 @@ export async function createTestDatabase() {
         "utf8",
       ),
     );
+    // Reproduce the deployed schema before the newer student features.
+    if (stopAfterLearningSessions) return db;
     await db.exec(
       await readFile(
         new URL(

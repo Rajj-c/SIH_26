@@ -1,4 +1,4 @@
-import { RecruitmentWorkspace } from "@/components/platform/recruitment";
+import { redirect } from "next/navigation";
 export default function Page() {
-  return <RecruitmentWorkspace role="student" />;
+  redirect("/student/career?tab=recruitment");
 }

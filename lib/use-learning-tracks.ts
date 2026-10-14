@@ -2,8 +2,9 @@
 import useSWR, { mutate } from "swr";
 import { supabase } from "./supabase/client";
 import { normalizeTrack, type LearningTrack } from "./learning-tracks";
+import { starterLearningTracks } from "./starter-learning-tracks.mjs";
 const KEY = "/api/learning-tracks";
-export function useLearningTracks() {
+export function useLearningTracks(includeStarterTracks = false) {
   const state = useSWR<LearningTrack[]>(
     KEY,
     async () => {
@@ -25,10 +26,12 @@ export function useLearningTracks() {
     { shouldRetryOnError: false, refreshInterval: 30000 },
   );
   return {
-    data: state.data,
+    data: includeStarterTracks
+      ? [...starterLearningTracks, ...(state.data ?? [])]
+      : state.data,
     loading: state.isLoading,
     error: state.error?.message as string | undefined,
-    refresh: state.mutate,
+    refresh: () => state.mutate(),
   };
 }
 export async function trackAction(
