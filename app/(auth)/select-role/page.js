@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import OptionWheel from "@/components/ui/OptionWheel";
+import { OriginWordmark } from "@/components/shared/origin-logo";
 
 /* ── Role data ───────────────────────────────────────────── */
 const roleOptions = [
@@ -190,11 +191,9 @@ function SelectRoleContent() {
       <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto w-full">
         <Link
           href="/"
-          className="text-2xl font-semibold tracking-tight text-foreground leading-none select-none"
-          style={{ fontFamily: "var(--font-display)" }}
+          className="text-foreground"
         >
-          Origin Point
-          <sup className="text-xs text-muted-foreground ml-0.5">®</sup>
+          <OriginWordmark className="text-sm sm:text-lg" />
         </Link>
 
         {currentUser ? (

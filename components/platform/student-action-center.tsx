@@ -104,45 +104,22 @@ export function StudentActionCenter() {
         now,
       })
     : null;
+  const refreshAll = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.allSettled(sources.map((source) => source.state.refresh()));
+      setNow(new Date().toISOString());
+    } finally {
+      setRefreshing(false);
+    }
+  };
   return (
-    <DashboardShell role="student" title="Student action center">
+    <DashboardShell role="student" title="Dashboard">
       <div className="space-y-7">
         <PageHeading
-          eyebrow="Your next step, connected"
           title="Turn your progress into possibility."
           description="See what needs attention, understand the evidence behind your matches, and connect learning to the next opportunity."
-          action={
-            <Button
-              variant="outline"
-              disabled={refreshing}
-              onClick={async () => {
-                setRefreshing(true);
-                try {
-                  await Promise.allSettled(
-                    sources.map((s) => s.state.refresh()),
-                  );
-                  setNow(new Date().toISOString());
-                } finally {
-                  setRefreshing(false);
-                }
-              }}
-            >
-              Refresh data
-            </Button>
-          }
         />
-        <div className="flex flex-wrap gap-2">
-          {sources.map((s) => (
-            <Tag key={s.name} positive={!!s.state.data && !s.state.error}>
-              {s.name}:{" "}
-              {s.state.error
-                ? "Unavailable"
-                : s.state.data
-                  ? "Loaded"
-                  : "Loading"}
-            </Tag>
-          ))}
-        </div>
         {!ready && (
           <>
             <p className="text-sm text-muted-foreground">
@@ -155,6 +132,13 @@ export function StudentActionCenter() {
                 <DataState key={s.name} {...s.state} retry={s.state.refresh} />
               ))}
           </>
+        )}
+        {ready && !model && (
+          <DataState
+            loading={false}
+            error="Some dashboard records are incomplete. Please reload your data."
+            retry={refreshAll}
+          />
         )}
         {model && (
           <>
@@ -227,9 +211,18 @@ export function StudentActionCenter() {
             </section>
             <section className="space-y-4">
               <div>
-                <h2 className="text-xl font-semibold">
-                  Understand your opportunity matches
-                </h2>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <h2 className="text-xl font-semibold">
+                    Understand your opportunity matches
+                  </h2>
+                  <Button
+                    variant="outline"
+                    disabled={refreshing}
+                    onClick={refreshAll}
+                  >
+                    Refresh data
+                  </Button>
+                </div>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Sorted by the share of required skills meeting their latest
                   assessment’s target. This is evidence coverage—not hiring

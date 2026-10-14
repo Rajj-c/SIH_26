@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import CometDial from "@/components/ui/CometDial";
+import { ProfileSelect } from "@/components/ui/profile-select";
 import { Save, UserRound } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import {
@@ -54,11 +56,11 @@ export function ProfileEditor({ role }: { role: Role }) {
   const completeness = data
     ? Math.round(
         ([
-          data.profile.full_name,
-          data.profile.headline,
-          data.profile.bio,
-          data.profile.location,
-          data.profile.organization,
+          String(form.full_name ?? data.profile.full_name).trim(),
+          String(form.headline ?? data.profile.headline).trim(),
+          String(form.bio ?? data.profile.bio).trim(),
+          String(form.location ?? data.profile.location).trim(),
+          String(form.organization ?? data.profile.organization).trim(),
           skills.length,
         ].filter(Boolean).length /
           6) *
@@ -67,7 +69,7 @@ export function ProfileEditor({ role }: { role: Role }) {
     : 0;
   return (
     <DashboardShell role={role} title="Profile">
-      <div className="space-y-6">
+      <div className="space-y-8">
         <PageHeading
           eyebrow={`${role} identity`}
           title="A profile that grows with you."
@@ -78,7 +80,7 @@ export function ProfileEditor({ role }: { role: Role }) {
           <>
             {action.feedback}
             {role === "student" && <StudentSetupChecklist data={data} />}
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(17rem,.7fr)]">
+            <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(17rem,.7fr)]">
               <Card className="overflow-hidden">
                 <div className="h-20 role-gradient opacity-90" />
                 <CardHeader>
@@ -227,11 +229,11 @@ export function ProfileEditor({ role }: { role: Role }) {
                         </span>
                         <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                           Signed-in members can find your name, bio,
-                          organization, and skills. Your email is not listed.
-                          Applying shares your portfolio and attached documents
-                          with the opportunity owner. An approved institution
-                          can also view your portfolio, documents, and learning
-                          progress.
+                          organization, and saved skills. Save your profile to
+                          keep changes. Your email is not listed. Applying
+                          shares your portfolio and attached documents with the
+                          opportunity owner. An approved institution can also
+                          view your portfolio, documents, and learning progress.
                         </span>
                       </span>
                     </label>
@@ -242,7 +244,7 @@ export function ProfileEditor({ role }: { role: Role }) {
                   </form>
                 </CardContent>
               </Card>
-              <div className="space-y-5">
+              <div className="space-y-6">
                 <Card className="role-gradient-subtle">
                   <CardHeader>
                     <CardTitle className="text-base">
@@ -250,18 +252,18 @@ export function ProfileEditor({ role }: { role: Role }) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="font-display text-4xl font-bold">
-                      {completeness}%
-                    </p>
-                    <div className="my-4 h-2 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full role-gradient"
-                        style={{ width: completeness + "%" }}
+                    <div className="flex justify-center">
+                      <CometDial
+                        value={completeness}
+                        size={200}
+                        accent="hsl(var(--role-primary))"
+                        ink="hsl(var(--foreground))"
                       />
                     </div>
                     <p className="text-xs leading-5 text-muted-foreground">
-                      Based on your saved name, headline, bio, location,
-                      organization, and skills.
+                      Updates as you enter your name, headline, bio, location,
+                      organization, and saved skills. Save your profile to keep
+                      changes.
                     </p>
                   </CardContent>
                 </Card>
@@ -359,7 +361,7 @@ export function ProfileEditor({ role }: { role: Role }) {
                           );
                         }}
                       >
-                        <select
+                        <ProfileSelect
                           required
                           aria-label="Institution"
                           className="field"
@@ -380,7 +382,7 @@ export function ProfileEditor({ role }: { role: Role }) {
                                 {p.organization || p.full_name}
                               </option>
                             ))}
-                        </select>
+                        </ProfileSelect>
                         <SaveButton busy={action.busy}>
                           Request membership
                         </SaveButton>

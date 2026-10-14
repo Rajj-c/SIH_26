@@ -37,10 +37,12 @@ import {
   useAction,
 } from "./primitives";
 export function ApplicationsWorkspace({
+  embedded = false,
   role = "student",
   recruiter = false,
   shortlist = false,
 }: {
+  embedded?: boolean;
   role?: Role;
   recruiter?: boolean;
   shortlist?: boolean;
@@ -76,6 +78,7 @@ export function ApplicationsWorkspace({
   );
   return (
     <DashboardShell
+      embedded={embedded}
       role={role}
       title={recruiter ? "Recruitment" : "Applications"}
     >

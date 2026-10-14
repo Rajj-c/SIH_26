@@ -1,4 +1,4 @@
-import { ApplicationsWorkspace } from "@/components/platform/applications";
+import { redirect } from "next/navigation";
 export default function ApplicationsPage() {
-  return <ApplicationsWorkspace />;
+  redirect("/student/career?tab=applications");
 }

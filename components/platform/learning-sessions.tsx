@@ -17,7 +17,7 @@ import {
   Metric,
   useAction,
 } from "./primitives";
-export function LearningSessions({ role }: { role: Role }) {
+export function LearningSessions({ role, embedded = false }: { role: Role; embedded?: boolean }) {
   const platform = usePlatformData(),
     state = useLearningSessions(),
     programs = useLearningPrograms(),
@@ -62,7 +62,7 @@ export function LearningSessions({ role }: { role: Role }) {
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   return (
-    <DashboardShell role={role} title="Sessions & events">
+    <DashboardShell embedded={embedded} role={role} title="Sessions & events">
       <div className="space-y-6">
         <PageHeading
           eyebrow="Learn together, in real time"

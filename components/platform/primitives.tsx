@@ -19,7 +19,7 @@ export function PageHeading({
   description,
   action,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description: string;
   action?: React.ReactNode;
@@ -28,10 +28,12 @@ export function PageHeading({
     <section className="page-heading">
       <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div className="max-w-2xl">
-          <p className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] role-text">
-            <Sparkles className="h-3.5 w-3.5" />
-            {eyebrow}
-          </p>
+          {eyebrow && (
+            <p className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] role-text">
+              <Sparkles className="h-3.5 w-3.5" />
+              {eyebrow}
+            </p>
+          )}
           <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
             {title}
           </h1>
@@ -64,7 +66,7 @@ export function DataState({
           We couldn’t open your workspace
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-        <Button onClick={retry} variant="outline" className="mt-5">
+        <Button onClick={() => retry()} variant="outline" className="mt-5">
           <RefreshCw className="mr-2 h-4 w-4" />
           Try again
         </Button>

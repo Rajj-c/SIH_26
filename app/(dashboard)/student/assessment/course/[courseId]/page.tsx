@@ -28,7 +28,7 @@ export default function CourseDetailPage() {
   const params = useParams();
   const courseId = typeof params?.courseId === "string" ? params.courseId : "";
 
-  const tracks = useLearningTracks();
+  const tracks = useLearningTracks(true);
   const course = tracks.data?.find(
     (c) => c.id === courseId && c.status === "Published",
   );
@@ -37,7 +37,7 @@ export default function CourseDetailPage() {
   const [expandedModuleId, setExpandedModuleId] = useState<string>("m1");
 
   const state = usePlatformData();
-  if (tracks.loading || tracks.error)
+  if (!course && (tracks.loading || tracks.error))
     return (
       <DashboardShell role="student" title="Learning track">
         <DataState {...tracks} retry={tracks.refresh} />
@@ -320,48 +320,51 @@ export default function CourseDetailPage() {
         {/* ========================================================================= */}
         {/* EXTERNAL LEARNING RESOURCES SECTION (Free, clean, topic-specific)          */}
         {/* ========================================================================= */}
-        <div className="space-y-6 pt-4 border-t border-border/70">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-primary" />
-              <h2 className="font-display text-xl font-bold text-foreground">
-                External Learning Resources &amp; References
-              </h2>
+        {course.resources.length > 0 && (
+          <div className="space-y-6 pt-4 border-t border-border/70">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-primary" />
+                <h2 className="font-display text-xl font-bold text-foreground">
+                  External Learning Resources &amp; References
+                </h2>
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Resources selected by {course.publisher_name} for {course.title}
+                . These are external links, not integrated certification
+                providers.
+              </p>
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Resources selected by {course.publisher_name} for {course.title}.
-              These are external links, not integrated certification providers.
-            </p>
-          </div>
 
-          {/* Reference Portals: Direct destination links for selected course */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {course.resources.map((site, idx) => (
-              <a
-                key={idx}
-                href={site.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-5 rounded-2xl border border-border/80 bg-card hover:border-primary/60 hover:shadow-sm transition-all flex flex-col justify-between gap-3 group"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                      {site.name}
-                    </span>
-                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+            {/* Reference Portals: Direct destination links for selected course */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {course.resources.map((site, idx) => (
+                <a
+                  key={idx}
+                  href={site.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-5 rounded-2xl border border-border/80 bg-card hover:border-primary/60 hover:shadow-sm transition-all flex flex-col justify-between gap-3 group"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                        {site.name}
+                      </span>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {site.description}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {site.description}
-                  </p>
-                </div>
-                <div className="text-xs font-semibold text-primary group-hover:underline">
-                  Open on {site.name} &rarr;
-                </div>
-              </a>
-            ))}
+                  <div className="text-xs font-semibold text-primary group-hover:underline">
+                    Open on {site.name} &rarr;
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </DashboardShell>
   );

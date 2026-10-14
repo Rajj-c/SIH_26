@@ -1,6 +1,9 @@
 import { createClient } from "./supabase/server";
 import { normalizeTrack } from "./learning-tracks";
+import { getStarterLearningTrack } from "./starter-learning-tracks.mjs";
 export async function getPublishedTrack(id: string) {
+  const starter = getStarterLearningTrack(id);
+  if (starter) return starter;
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   )

@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase/client";
+import { prepareOAuthRedirect } from "@/lib/oauth-redirect.mjs";
 import { OriginWordmark } from "@/components/shared/origin-logo";
 import OptionWheel from "@/components/ui/OptionWheel";
 
@@ -452,7 +453,10 @@ function SignUpForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?mode=signup&role=${roleToAssign}`,
+          redirectTo: prepareOAuthRedirect(window.location.origin, {
+            mode: "signup",
+            role: roleToAssign,
+          }),
         },
       });
       if (error) {
@@ -492,11 +496,9 @@ function SignUpForm() {
         <nav className="relative z-10 flex items-center justify-between px-8 py-5 max-w-7xl mx-auto w-full shrink-0">
           <Link
             href="/"
-            className="text-2xl font-semibold tracking-tight text-foreground leading-none select-none"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="text-foreground"
           >
-            Origin Point
-            <sup className="text-xs text-muted-foreground ml-0.5">®</sup>
+            <OriginWordmark className="text-sm sm:text-lg" />
           </Link>
           <p
             className="text-sm"

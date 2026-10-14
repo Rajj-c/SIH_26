@@ -28,6 +28,7 @@ function harness({ signedIn = true, role = "student", failure = false } = {}) {
     };
   };
   const modules = {
+    "@/lib/supabase/project-url.mjs": { normalizeSupabaseUrl: () => "https://test.supabase.co" },
     "next/server": {
       NextResponse: {
         next: () => ({ kind: "next", cookies: cookieStore() }),
@@ -90,6 +91,11 @@ test("signed-out users cannot open any role workspace and refreshed cookies surv
       { name: "session", value: "test-only-refresh", httpOnly: true },
     ]);
   }
+});
+
+test("login retains the requested page query parameters", async () => {
+  const result = await harness({ signedIn: false })("/student/portfolio?tab=projects");
+  assert.equal(result.url.searchParams.get("next"), "/student/portfolio?tab=projects");
 });
 
 test("all four roles stay in their assigned workspace even on direct URL entry", async () => {

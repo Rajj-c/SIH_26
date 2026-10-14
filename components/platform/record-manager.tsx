@@ -1,4 +1,5 @@
 "use client";
+import { ProfileSelect } from "@/components/ui/profile-select";
 import { useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -34,13 +35,13 @@ import { DocumentLink } from "./document-link";
 import { Empty, Field, SaveButton, Tag, useAction } from "./primitives";
 export function RecordManager({ data }: { data: PlatformData }) {
   const tracking = useApplicationTracking();
-  const records = data.records.filter((r) => r.user_id === data.profile.id);
+  const records = data.records.filter((r) => r.user_id === data.profile?.id);
   const action = useAction();
   const formRef = useRef<HTMLFormElement>(null);
   const [kind, setKind] = useState<PortfolioRecord["kind"]>("certification");
   const [filter, setFilter] = useState("All");
   const [editing, setEditing] = useState<PortfolioRecord | null>(null);
-  const foundationReady = data.profile.preferred_roles !== undefined;
+  const foundationReady = data.profile?.preferred_roles !== undefined;
   const kinds = [
     "skill",
     "certification",
@@ -54,8 +55,8 @@ export function RecordManager({ data }: { data: PlatformData }) {
     filter === "All" ? records : records.filter((r) => r.kind === filter);
   return (
     <section className="space-y-5">
-      {data.profile.role === "student" && <SkillPassport data={data} />}
-      {data.profile.role === "student" && (
+      {data.profile?.role === "student" && <SkillPassport data={data} />}
+      {data.profile?.role === "student" && (
         <Link
           className="glass-row block rounded-2xl p-4 text-sm font-semibold role-text"
           href="/student/credential-reviews"
@@ -63,12 +64,15 @@ export function RecordManager({ data }: { data: PlatformData }) {
           Request institution review of a certificate or view decisions ↗
         </Link>
       )}
-      {["student", "academician"].includes(data.profile.role) && (
-        <ProgramCompletions userId={data.profile.id} role={data.profile.role} />
+      {["student", "academician"].includes(data.profile?.role ?? "") && (
+        <ProgramCompletions
+          userId={data.profile?.id ?? ""}
+          role={data.profile?.role ?? "student"}
+        />
       )}
       {data.applications.some(
         (a) =>
-          a.applicantId === data.profile.id &&
+          a.applicantId === data.profile?.id &&
           a.status === "Completed" &&
           data.opportunities.some(
             (o) =>
@@ -150,7 +154,7 @@ export function RecordManager({ data }: { data: PlatformData }) {
         </Button>
       </div>
       {action.feedback}
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid items-start gap-6">
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
             {["All", ...kinds].map((k) => (
@@ -351,7 +355,8 @@ export function RecordManager({ data }: { data: PlatformData }) {
               }}
             >
               <Field label="Record type">
-                <select
+                <ProfileSelect
+                  aria-label="Record type"
                   disabled={!!editing || action.busy}
                   className="field"
                   value={kind}
@@ -362,7 +367,7 @@ export function RecordManager({ data }: { data: PlatformData }) {
                   {kinds.map((k) => (
                     <option key={k}>{k}</option>
                   ))}
-                </select>
+                </ProfileSelect>
               </Field>
               <Field label="Title">
                 <input
@@ -423,7 +428,8 @@ export function RecordManager({ data }: { data: PlatformData }) {
                 <>
                   {kind === "skill" && (
                     <Field label="Self-declared proficiency">
-                      <select
+                      <ProfileSelect
+                        aria-label="Self-declared proficiency"
                         name="proficiency"
                         className="field"
                         defaultValue={editing?.proficiency ?? ""}
@@ -434,7 +440,7 @@ export function RecordManager({ data }: { data: PlatformData }) {
                             <option key={level}>{level}</option>
                           ),
                         )}
-                      </select>
+                      </ProfileSelect>
                     </Field>
                   )}
                   {kind === "certification" && (

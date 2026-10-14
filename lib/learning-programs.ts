@@ -76,7 +76,7 @@ export function useLearningPrograms() {
     data: state.data,
     loading: state.isLoading,
     error: state.error?.message as string | undefined,
-    refresh: state.mutate,
+    refresh: () => state.mutate(),
   };
 }
 export async function programAction(

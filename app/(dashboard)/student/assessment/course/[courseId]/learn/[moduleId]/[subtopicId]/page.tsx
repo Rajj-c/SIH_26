@@ -29,7 +29,7 @@ export default async function Page({
           description={courseModule.description}
         />
         <div className="rounded-2xl border border-border bg-card p-5 text-sm leading-6 text-muted-foreground">
-          Use the learning resources on the course page to study this topic.
+          Review the study notes above before starting the practice questions.
           Submitting this practice records participation, not verified
           proficiency, course accreditation or a provider-issued certificate.
         </div>

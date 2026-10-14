@@ -1,4 +1,4 @@
-import { InternshipWorkspace } from "@/components/platform/application-tracking";
+import { redirect } from "next/navigation";
 export default function Page() {
-  return <InternshipWorkspace role="student" />;
+  redirect("/student/career?tab=internships");
 }
